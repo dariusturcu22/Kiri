@@ -1,0 +1,29 @@
+# Build output
+bin/
+obj/
+
+# Rider
+.idea/
+
+# Visual Studio
+.vs/
+*.user
+
+# Test results and coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+.nuget/
+
+# Environment / secrets
+appsettings.Development.json
+*.pfx
+*.p12
+
+# OS
+.DS_Store
+Thumbs.db

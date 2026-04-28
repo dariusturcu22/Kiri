@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, Pencil, Trash2, Search, Bell, Plus } from "lucide-react";
 import { usePropertyStore } from "@/store/properties";
@@ -27,10 +27,15 @@ const COL_GRID =
 
 export default function PropertiesPage() {
   const router = useRouter();
-  const { properties, deleteProperty } = usePropertyStore();
+  const { properties, isLoading, fetchProperties, deleteProperty } =
+    usePropertyStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [showStats, setShowStats] = useState(false);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    fetchProperties();
+  }, []);
 
   const filtered = properties.filter(
     (property) =>
@@ -141,7 +146,11 @@ export default function PropertiesPage() {
               ))}
             </div>
 
-            {visibleProperties.length === 0 ? (
+            {isLoading ? (
+              <div className="py-16 text-center text-slate text-sm">
+                Loading properties...
+              </div>
+            ) : visibleProperties.length === 0 ? (
               <div className="py-16 text-center text-slate text-sm">
                 {search
                   ? "No properties match your search."

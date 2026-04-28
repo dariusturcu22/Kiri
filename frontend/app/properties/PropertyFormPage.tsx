@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Home, Search, Upload } from "lucide-react";
 import {
   usePropertyStore,
   PropertyFormSchema,
   type PropertyFormData,
+  type Property,
 } from "@/store/properties";
 import Sidebar from "@/components/Sidebar";
 
@@ -367,8 +368,8 @@ export function NewPropertyPage() {
   return (
     <PropertyForm
       pageTitle="Add Property"
-      onSubmit={(data) => {
-        addProperty(data);
+      onSubmit={async (data) => {
+        await addProperty(data);
         router.push("/properties");
       }}
       onCancel={() => router.push("/properties")}
@@ -382,11 +383,27 @@ export function EditPropertyPage() {
   const { getPropertyById, updateProperty } = usePropertyStore();
 
   const propertyId = Number(params.id);
-  const property = getPropertyById(propertyId);
+  const [property, setProperty] = useState<Property | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    getPropertyById(propertyId).then((found) => {
+      setProperty(found);
+      setIsLoading(false);
+    });
+  }, [propertyId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-cream-bg">
+        <p className="text-slate text-sm">Loading property...</p>
+      </div>
+    );
+  }
 
   if (!property) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-cream-bg">
         <p className="text-slate">Property not found.</p>
       </div>
     );
@@ -394,7 +411,7 @@ export function EditPropertyPage() {
 
   const defaultValues: Partial<PropertyFormData> = {
     name: property.name,
-    image: property.image,
+    image: property.image ?? "",
     address: property.address,
     city: property.city,
     postalCode: property.postalCode,
@@ -408,8 +425,8 @@ export function EditPropertyPage() {
     <PropertyForm
       pageTitle="Edit Property"
       defaultValues={defaultValues}
-      onSubmit={(data) => {
-        updateProperty(propertyId, data);
+      onSubmit={async (data) => {
+        await updateProperty(propertyId, data);
         router.push(`/properties/${propertyId}`);
       }}
       onCancel={() => router.push(`/properties/${propertyId}`)}

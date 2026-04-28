@@ -13,6 +13,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { usePropertyStore } from "@/store/properties";
+import type { Property } from "@/store/properties";
 import Sidebar from "@/components/Sidebar";
 import {
   AlertDialog,
@@ -26,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { trackEvent } from "@/lib/activity";
 
 const METER_READINGS = [
@@ -148,13 +149,29 @@ export default function PropertyDetailPage() {
   const { getPropertyById, deleteProperty } = usePropertyStore();
 
   const propertyId = Number(params.id);
-  const property = getPropertyById(propertyId);
+  const [property, setProperty] = useState<Property | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    getPropertyById(propertyId).then((found) => {
+      setProperty(found);
+      setIsLoading(false);
+    });
+  }, [propertyId]);
 
   useEffect(() => {
     if (property) {
       trackEvent("property_viewed", property.name);
     }
   }, [property]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-cream-bg">
+        <p className="text-slate text-sm">Loading property...</p>
+      </div>
+    );
+  }
 
   if (!property) {
     return (

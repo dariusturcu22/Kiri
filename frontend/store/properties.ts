@@ -1,23 +1,31 @@
 import { create } from "zustand";
-import { property, z } from "zod";
+import { z } from "zod";
+import axios from "axios";
 import { trackEvent } from "@/lib/activity";
 
+const api = axios.create({
+  baseURL: "http://localhost:5045",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 export const TenantSchema = z.object({
-  initials: z.string().min(1).max(3),
-  bgColor: z.string(),
+  initials: z.string(),
+  backgroundColor: z.string(),
   textColor: z.string(),
 });
 
 export const PropertySchema = z.object({
   id: z.number(),
-  name: z.string().min(1, "Name is required"),
-  image: z.string().optional().or(z.literal("")),
-  address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  postalCode: z.string().min(1, "Postal code is required"),
-  rent: z.number().min(1, "Rent must be greater than 0"),
-  currency: z.enum(["EUR", "USD", "GBP"]),
-  status: z.enum(["Occupied", "Vacant"]),
+  name: z.string(),
+  image: z.string().optional().nullable(),
+  address: z.string(),
+  city: z.string(),
+  postalCode: z.string(),
+  rent: z.number(),
+  currency: z.string(),
+  status: z.string(),
   tenants: z.array(TenantSchema),
   dateAdded: z.string(),
   lastUpdated: z.string(),
@@ -33,213 +41,80 @@ export type Tenant = z.infer<typeof TenantSchema>;
 export type Property = z.infer<typeof PropertySchema>;
 export type PropertyFormData = z.infer<typeof PropertyFormSchema>;
 
-const today = () =>
-  new Date().toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-const SEED_PROPERTIES: Property[] = [
-  {
-    id: 1,
-    name: "Oxygen Residence",
-    image: "/properties/photo1.jpg",
-    address: "Piata Abator, Nr 1, Ap. 20",
-    city: "Cluj-Napoca",
-    postalCode: "400001",
-    rent: 800,
-    currency: "EUR",
-    status: "Occupied",
-    tenants: [
-      {
-        initials: "AM",
-        bgColor: "bg-orange-100",
-        textColor: "text-orange-700",
-      },
-      { initials: "DT", bgColor: "bg-amber-100", textColor: "text-amber-700" },
-    ],
-    dateAdded: "12 March 2025",
-    lastUpdated: "2 January 2026",
-  },
-  {
-    id: 2,
-    name: "Oxygen Residence",
-    image: "/properties/photo1.jpg",
-    address: "Piata Abator, Nr 1, Ap. 56",
-    city: "Cluj-Napoca",
-    postalCode: "400001",
-    rent: 600,
-    currency: "EUR",
-    status: "Occupied",
-    tenants: [
-      { initials: "DT", bgColor: "bg-amber-100", textColor: "text-amber-700" },
-    ],
-    dateAdded: "3 April 2025",
-    lastUpdated: "3 April 2025",
-  },
-  {
-    id: 3,
-    name: "Oxygen Residence",
-    image: "/properties/photo1.jpg",
-    address: "Piata Abator, Nr 1, Ap. 127",
-    city: "Cluj-Napoca",
-    postalCode: "400001",
-    rent: 1500,
-    currency: "EUR",
-    status: "Occupied",
-    tenants: [
-      { initials: "PB", bgColor: "bg-rose-100", textColor: "text-rose-700" },
-      {
-        initials: "GC",
-        bgColor: "bg-orange-100",
-        textColor: "text-orange-700",
-      },
-    ],
-    dateAdded: "1 May 2025",
-    lastUpdated: "1 May 2025",
-  },
-  {
-    id: 4,
-    name: "Piata Viteazu",
-    image: "/properties/photo4.jpg",
-    address: "Piata Mihai Viteazu, Nr 11-13, Ap. 1",
-    city: "Cluj-Napoca",
-    postalCode: "400110",
-    rent: 500,
-    currency: "EUR",
-    status: "Occupied",
-    tenants: [
-      {
-        initials: "LT",
-        bgColor: "bg-orange-100",
-        textColor: "text-orange-700",
-      },
-    ],
-    dateAdded: "10 June 2025",
-    lastUpdated: "10 June 2025",
-  },
-  {
-    id: 5,
-    name: "Piata Viteazu",
-    image: "/properties/photo4.jpg",
-    address: "Piata Mihai Viteazu, Nr 11-13, Ap. 10",
-    city: "Cluj-Napoca",
-    postalCode: "400110",
-    rent: 400,
-    currency: "EUR",
-    status: "Occupied",
-    tenants: [
-      { initials: "JK", bgColor: "bg-rose-100", textColor: "text-rose-700" },
-      {
-        initials: "BB",
-        bgColor: "bg-orange-100",
-        textColor: "text-orange-700",
-      },
-    ],
-    dateAdded: "10 June 2025",
-    lastUpdated: "10 June 2025",
-  },
-  {
-    id: 6,
-    name: "Piata Viteazu",
-    image: "/properties/photo4.jpg",
-    address: "Piata Mihai Viteazu, Nr 11-13, Ap. 22",
-    city: "Cluj-Napoca",
-    postalCode: "400110",
-    rent: 700,
-    currency: "EUR",
-    status: "Vacant",
-    tenants: [],
-    dateAdded: "15 July 2025",
-    lastUpdated: "15 July 2025",
-  },
-  {
-    id: 7,
-    name: "Piata Viteazu",
-    image: "/properties/photo4.jpg",
-    address: "Piata Mihai Viteazu, Nr 11-13, Ap. 40",
-    city: "Cluj-Napoca",
-    postalCode: "400110",
-    rent: 800,
-    currency: "EUR",
-    status: "Occupied",
-    tenants: [
-      { initials: "HM", bgColor: "bg-rose-100", textColor: "text-rose-700" },
-      {
-        initials: "BE",
-        bgColor: "bg-orange-100",
-        textColor: "text-orange-700",
-      },
-      { initials: "LG", bgColor: "bg-rose-100", textColor: "text-rose-700" },
-      {
-        initials: "JB",
-        bgColor: "bg-orange-100",
-        textColor: "text-orange-700",
-      },
-    ],
-    dateAdded: "20 August 2025",
-    lastUpdated: "20 August 2025",
-  },
-  {
-    id: 8,
-    name: "The Nest",
-    image: "/properties/photo2.jpg",
-    address: "Strada Scorarilor, Nr 12, Ap. 30",
-    city: "Cluj-Napoca",
-    postalCode: "400200",
-    rent: 700,
-    currency: "EUR",
-    status: "Vacant",
-    tenants: [],
-    dateAdded: "1 September 2025",
-    lastUpdated: "1 September 2025",
-  },
-];
-
 type PropertyStore = {
   properties: Property[];
-  addProperty: (data: PropertyFormData) => void;
-  updateProperty: (id: number, data: PropertyFormData) => void;
-  deleteProperty: (id: number) => void;
-  getPropertyById: (id: number) => Property | undefined;
+  isLoading: boolean;
+  totalCount: number;
+  fetchProperties: (params?: {
+    page?: number;
+    pageSize?: number;
+    city?: string;
+    status?: string;
+  }) => Promise<void>;
+  addProperty: (data: PropertyFormData) => Promise<void>;
+  updateProperty: (id: number, data: PropertyFormData) => Promise<void>;
+  deleteProperty: (id: number) => Promise<void>;
+  getPropertyById: (id: number) => Promise<Property | undefined>;
 };
 
 export const usePropertyStore = create<PropertyStore>((set, get) => ({
-  properties: SEED_PROPERTIES,
+  properties: [],
+  isLoading: false,
+  totalCount: 0,
 
-  addProperty: (data) => {
-    const newId = Math.max(0, ...get().properties.map((p) => p.id)) + 1;
-    const newProperty: Property = {
-      ...data,
-      id: newId,
-      dateAdded: today(),
-      lastUpdated: today(),
-    };
-    trackEvent("property_created", data.name);
-    set((state) => ({ properties: [...state.properties, newProperty] }));
+  fetchProperties: async (params) => {
+    set({ isLoading: true });
+    try {
+      const response = await api.get("/api/properties", { params });
+      set({
+        properties: response.data.items || [],
+        totalCount: response.data.totalCount || 0,
+        isLoading: false,
+      });
+    } catch (error) {
+      set({ isLoading: false, properties: [] });
+    }
   },
 
-  updateProperty: (id, data) => {
-    trackEvent("property_edited", `ID: ${id} - ${data.name}`);
-    set((state) => ({
-      properties: state.properties.map((property) =>
-        property.id === id
-          ? { ...property, ...data, lastUpdated: today() }
-          : property,
-      ),
-    }));
+  addProperty: async (data) => {
+    try {
+      const response = await api.post<Property>("/api/properties", data);
+      trackEvent("property_created", data.name);
+      set((state) => ({ properties: [...state.properties, response.data] }));
+    } catch (error) {}
   },
 
-  deleteProperty: (id) => {
-    const property = get().getPropertyById(id);
-    trackEvent("property_deleted", property?.name || `ID: ${id}`);
-    set((state) => ({
-      properties: state.properties.filter((property) => property.id !== id),
-    }));
+  updateProperty: async (id, data) => {
+    try {
+      const response = await api.put<Property>(`/api/properties/${id}`, data);
+      trackEvent("property_edited", `ID: ${id} - ${data.name}`);
+      set((state) => ({
+        properties: state.properties.map((p) =>
+          p.id === id ? response.data : p,
+        ),
+      }));
+    } catch (error) {}
   },
 
-  getPropertyById: (id) => {
-    return get().properties.find((property) => property.id === id);
+  deleteProperty: async (id) => {
+    try {
+      const property = get().properties.find((p) => p.id === id);
+      await api.delete(`/api/properties/${id}`);
+      trackEvent("property_deleted", property?.name || `ID: ${id}`);
+      set((state) => ({
+        properties: state.properties.filter((p) => p.id !== id),
+      }));
+    } catch (error) {}
+  },
+
+  getPropertyById: async (id) => {
+    const local = get().properties.find((p) => p.id === id);
+    if (local) return local;
+    try {
+      const response = await api.get<Property>(`/api/properties/${id}`);
+      return response.data;
+    } catch (error) {
+      return undefined;
+    }
   },
 }));
