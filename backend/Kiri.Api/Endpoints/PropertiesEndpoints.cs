@@ -34,7 +34,7 @@ public static class PropertiesEndpoints
 
         var filteredProperties = storage.GetAll()
             .Where(p => city is null || p.City.Equals(city, StringComparison.OrdinalIgnoreCase))
-            .Where(p => status is null || p.Status.Equals(status, StringComparison.OrdinalIgnoreCase))
+            .Where(p => status is null || p.Status.ToString().Equals(status, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         var pagedItems = filteredProperties

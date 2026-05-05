@@ -5,9 +5,6 @@ namespace Kiri.Api.Validators;
 
 public sealed class PropertyFormDataValidator : AbstractValidator<PropertyFormData>
 {
-    private static readonly string[] AllowedCurrencies = ["EUR", "USD", "GBP"];
-    private static readonly string[] AllowedStatuses = ["Occupied", "Vacant"];
-
     public PropertyFormDataValidator()
     {
         RuleFor(p => p.Name)
@@ -31,11 +28,11 @@ public sealed class PropertyFormDataValidator : AbstractValidator<PropertyFormDa
             .WithMessage("Rent must be greater than 0.");
 
         RuleFor(p => p.Currency)
-            .Must(currency => AllowedCurrencies.Contains(currency))
-            .WithMessage($"Currency must be one of: {string.Join(", ", AllowedCurrencies)}.");
+            .IsInEnum()
+            .WithMessage("Currency must be one of: RON, EUR, USD.");
 
         RuleFor(p => p.Status)
-            .Must(status => AllowedStatuses.Contains(status))
-            .WithMessage($"Status must be one of: {string.Join(", ", AllowedStatuses)}.");
+            .IsInEnum()
+            .WithMessage("Status must be one of: Vacant, Occupied.");
     }
 }

@@ -17,8 +17,8 @@ public sealed class PropertyFormDataValidatorTests
         City = "Cluj-Napoca",
         PostalCode = "400001",
         Rent = 800,
-        Currency = "EUR",
-        Status = "Occupied",
+        Currency = Currency.EUR,
+        Status = PropertyStatus.Occupied,
         Tenants = [],
     };
 
@@ -72,7 +72,7 @@ public sealed class PropertyFormDataValidatorTests
     [Fact]
     public void Validate_InvalidCurrency_ShouldFail()
     {
-        var result = _validator.Validate(ValidFormData() with { Currency = "RON" });
+        var result = _validator.Validate(ValidFormData() with { Currency = (Currency)999 });
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == nameof(PropertyFormData.Currency));
     }
@@ -80,25 +80,25 @@ public sealed class PropertyFormDataValidatorTests
     [Fact]
     public void Validate_InvalidStatus_ShouldFail()
     {
-        var result = _validator.Validate(ValidFormData() with { Status = "Rented" });
+        var result = _validator.Validate(ValidFormData() with { Status = (PropertyStatus)999 });
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == nameof(PropertyFormData.Status));
     }
 
     [Theory]
-    [InlineData("EUR")]
-    [InlineData("USD")]
-    [InlineData("GBP")]
-    public void Validate_AllAllowedCurrencies_ShouldPass(string currency)
+    [InlineData(Currency.EUR)]
+    [InlineData(Currency.USD)]
+    [InlineData(Currency.RON)]
+    public void Validate_AllAllowedCurrencies_ShouldPass(Currency currency)
     {
         var result = _validator.Validate(ValidFormData() with { Currency = currency });
         result.IsValid.Should().BeTrue();
     }
 
     [Theory]
-    [InlineData("Occupied")]
-    [InlineData("Vacant")]
-    public void Validate_AllAllowedStatuses_ShouldPass(string status)
+    [InlineData(PropertyStatus.Occupied)]
+    [InlineData(PropertyStatus.Vacant)]
+    public void Validate_AllAllowedStatuses_ShouldPass(PropertyStatus status)
     {
         var result = _validator.Validate(ValidFormData() with { Status = status });
         result.IsValid.Should().BeTrue();

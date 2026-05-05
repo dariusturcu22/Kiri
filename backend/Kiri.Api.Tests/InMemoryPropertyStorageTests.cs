@@ -16,8 +16,8 @@ public sealed class InMemoryPropertyStorageTests
         City = "Cluj-Napoca",
         PostalCode = "400001",
         Rent = 500,
-        Currency = "EUR",
-        Status = "Vacant",
+        Currency = Currency.EUR,
+        Status = PropertyStatus.Vacant,
         Tenants = [],
     };
 
@@ -45,8 +45,8 @@ public sealed class InMemoryPropertyStorageTests
         var added = storage.Add(SamplePropertyFormData());
 
         added.Id.Should().BePositive();
-        added.DateAdded.Should().NotBeNullOrEmpty();
-        added.LastUpdated.Should().NotBeNullOrEmpty();
+        added.DateAdded.Should().NotBe(default(DateTime));
+        added.LastUpdated.Should().NotBe(default(DateTime));
         added.Name.Should().Be("Test Property");
     }
 
@@ -94,12 +94,12 @@ public sealed class InMemoryPropertyStorageTests
         var targetId = allProperties[0].Id;
         var originalDateAdded = allProperties[0].DateAdded;
 
-        var updatedFormData = SamplePropertyFormData() with { Rent = 999, Status = "Occupied" };
+        var updatedFormData = SamplePropertyFormData() with { Rent = 999, Status = PropertyStatus.Occupied };
         var updated = storage.Update(targetId, updatedFormData);
 
         updated.Should().NotBeNull();
         updated!.Rent.Should().Be(999);
-        updated.Status.Should().Be("Occupied");
+        updated.Status.Should().Be(PropertyStatus.Occupied);
         updated.DateAdded.Should().Be(originalDateAdded);
 
         var remainingProperties = storage.GetAll().Where(p => p.Id != targetId).ToList();
@@ -161,7 +161,7 @@ public sealed class InMemoryPropertyStorageTests
     public void GetStatistics_AfterAddingVacantProperty_UpdatesVacantCount()
     {
         var storage = CreateFreshStorage();
-        storage.Add(SamplePropertyFormData() with { Status = "Vacant" });
+        storage.Add(SamplePropertyFormData() with { Status = PropertyStatus.Vacant });
 
         var stats = storage.GetStatistics();
 

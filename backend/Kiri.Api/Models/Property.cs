@@ -2,16 +2,16 @@ namespace Kiri.Api.Models;
 
 public sealed class Property
 {
-    public required int Id { get; init; }
-    public required string Name { get; init; }
-    public string? Image { get; init; }
-    public required string Address { get; init; }
-    public required string City { get; init; }
-    public required string PostalCode { get; init; }
-    public required decimal Rent { get; init; }
-    public required string Currency { get; init; }
-    public required string Status { get; init; }
-    public required IReadOnlyList<Tenant> Tenants { get; init; }
-    public required string DateAdded { get; init; }
-    public required string LastUpdated { get; init; }
+    public int Id { get; set; }
+    public required string Name { get; set; }
+    public string? Image { get; set; }
+    public required string Address { get; set; }
+    public required string City { get; set; }
+    public required string PostalCode { get; set; }
+    public required decimal Rent { get; set; }
+    public required Currency Currency { get; set; }
+    public required PropertyStatus Status { get; set; }
+    public DateTime DateAdded { get; set; }
+    public DateTime LastUpdated { get; set; }
+    public ICollection<Tenant> Tenants { get; set; } = [];
 }

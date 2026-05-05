@@ -25,8 +25,8 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         City = "Cluj-Napoca",
         PostalCode = "400001",
         Rent = 500,
-        Currency = "EUR",
-        Status = "Vacant",
+        Currency = Currency.EUR,
+        Status = PropertyStatus.Vacant,
         Tenants = [],
     };
 
@@ -61,7 +61,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>();
-        result!.Items.Should().OnlyContain(p => p.Status == "Vacant");
+        result!.Items.Should().OnlyContain(p => p.Status == PropertyStatus.Vacant);
         result.TotalCount.Should().Be(2);
     }
 
@@ -93,7 +93,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         created.Should().NotBeNull();
         created!.Id.Should().BePositive();
         created.Name.Should().Be("Test Property");
-        created.DateAdded.Should().NotBeNullOrEmpty();
+        created.DateAdded.Should().NotBe(default(DateTime));
     }
 
     [Fact]
@@ -109,14 +109,14 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
     [Fact]
     public async Task Update_ExistingProperty_ReturnsUpdatedProperty()
     {
-        var updatedData = SamplePropertyFormData() with { Rent = 999, Status = "Occupied" };
+        var updatedData = SamplePropertyFormData() with { Rent = 999, Status = PropertyStatus.Occupied };
 
         var response = await _client.PutAsJsonAsync("/api/properties/1", updatedData);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var updated = await response.Content.ReadFromJsonAsync<Property>();
         updated!.Rent.Should().Be(999);
-        updated.Status.Should().Be("Occupied");
+        updated.Status.Should().Be(PropertyStatus.Occupied);
     }
 
     [Fact]
