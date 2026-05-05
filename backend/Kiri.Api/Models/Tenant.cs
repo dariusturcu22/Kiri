@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Kiri.Api.Models;
 
 public sealed class Tenant
@@ -10,5 +12,5 @@ public sealed class Tenant
     public required string BackgroundColor { get; set; }
     public required string TextColor { get; set; }
     public string Initials => $"{FirstName[0]}{LastName[0]}".ToUpper();
-    public ICollection<Property> Properties { get; set; } = [];
+    [JsonIgnore] public ICollection<Property> Properties { get; set; } = [];
 }
