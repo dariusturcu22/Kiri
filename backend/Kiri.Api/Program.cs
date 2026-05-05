@@ -20,13 +20,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<PropertyFormDataValidator>(
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
-    {
-        policy
-            .WithOrigins("http://localhost:3000", "http://localhost:5173")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
+    options.AddDefaultPolicy(policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
 });
 
 var app = builder.Build();
