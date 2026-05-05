@@ -1,19 +1,17 @@
 import { create } from "zustand";
 import { z } from "zod";
-import axios from "axios";
+import api from "@/lib/axios";
 import { trackEvent } from "@/lib/activity";
 
-const api = axios.create({
-  baseURL: "http://localhost:5045",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
 export const TenantSchema = z.object({
-  initials: z.string(),
+  id: z.number().optional(),
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string(),
+  phone: z.string().optional().nullable(),
   backgroundColor: z.string(),
   textColor: z.string(),
+  initials: z.string().optional(),
 });
 
 export const PropertySchema = z.object({
@@ -24,8 +22,8 @@ export const PropertySchema = z.object({
   city: z.string(),
   postalCode: z.string(),
   rent: z.number(),
-  currency: z.string(),
-  status: z.string(),
+  currency: z.number(),
+  status: z.number(),
   tenants: z.array(TenantSchema),
   dateAdded: z.string(),
   lastUpdated: z.string(),
@@ -40,6 +38,9 @@ export const PropertyFormSchema = PropertySchema.omit({
 export type Tenant = z.infer<typeof TenantSchema>;
 export type Property = z.infer<typeof PropertySchema>;
 export type PropertyFormData = z.infer<typeof PropertyFormSchema>;
+
+export const CurrencyEnum = { RON: 0, EUR: 1, USD: 2 } as const;
+export const StatusEnum = { Vacant: 0, Occupied: 1 } as const;
 
 type PropertyStore = {
   properties: Property[];
@@ -71,7 +72,7 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
         totalCount: response.data.totalCount || 0,
         isLoading: false,
       });
-    } catch (error) {
+    } catch {
       set({ isLoading: false, properties: [] });
     }
   },
@@ -81,7 +82,7 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
       const response = await api.post<Property>("/api/properties", data);
       trackEvent("property_created", data.name);
       set((state) => ({ properties: [...state.properties, response.data] }));
-    } catch (error) {}
+    } catch {}
   },
 
   updateProperty: async (id, data) => {
@@ -93,7 +94,7 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
           p.id === id ? response.data : p,
         ),
       }));
-    } catch (error) {}
+    } catch {}
   },
 
   deleteProperty: async (id) => {
@@ -104,7 +105,7 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
       set((state) => ({
         properties: state.properties.filter((p) => p.id !== id),
       }));
-    } catch (error) {}
+    } catch {}
   },
 
   getPropertyById: async (id) => {
@@ -113,7 +114,7 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
     try {
       const response = await api.get<Property>(`/api/properties/${id}`);
       return response.data;
-    } catch (error) {
+    } catch {
       return undefined;
     }
   },
