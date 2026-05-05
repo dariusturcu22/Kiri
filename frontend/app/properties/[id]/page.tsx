@@ -303,7 +303,7 @@ export default function PropertyDetailPage() {
                   </span>
                 </div>
                 <span className="font-semibold text-brown-dark text-[13px]">
-                  {tenant.initials}
+                  {tenant.firstName + " " + tenant.lastName}
                 </span>
               </div>
             ))
