@@ -17,7 +17,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
 });
 
-builder.Services.AddSingleton<IPropertyStorage, InMemoryPropertyStorage>();
+builder.Services.AddScoped<IPropertyStorage, SqlPropertyStorage>();
 builder.Services.AddValidatorsFromAssemblyContaining<PropertyFormDataValidator>();
 
 builder.Services.AddCors(options =>

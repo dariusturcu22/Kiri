@@ -12,12 +12,13 @@ public sealed class InMemoryPropertyStorage : IPropertyStorage
         _nextId = _properties.Max(p => p.Id) + 1;
     }
 
-    public IReadOnlyList<Property> GetAll() => _properties.AsReadOnly();
+    public Task<IReadOnlyList<Property>> GetAllAsync() =>
+        Task.FromResult<IReadOnlyList<Property>>(_properties.AsReadOnly());
 
-    public Property? GetById(int id) =>
-        _properties.FirstOrDefault(p => p.Id == id);
+    public Task<Property?> GetByIdAsync(int id) =>
+        Task.FromResult(_properties.FirstOrDefault(p => p.Id == id));
 
-    public Property Add(PropertyFormData formData)
+    public Task<Property> AddAsync(PropertyFormData formData)
     {
         var newProperty = new Property
         {
@@ -36,15 +37,15 @@ public sealed class InMemoryPropertyStorage : IPropertyStorage
         };
 
         _properties.Add(newProperty);
-        return newProperty;
+        return Task.FromResult(newProperty);
     }
 
-    public Property? Update(int id, PropertyFormData formData)
+    public Task<Property?> UpdateAsync(int id, PropertyFormData formData)
     {
         var existingIndex = _properties.FindIndex(p => p.Id == id);
 
         if (existingIndex == -1)
-            return null;
+            return Task.FromResult<Property?>(null);
 
         var existing = _properties[existingIndex];
 
@@ -65,23 +66,23 @@ public sealed class InMemoryPropertyStorage : IPropertyStorage
         };
 
         _properties[existingIndex] = updatedProperty;
-        return updatedProperty;
+        return Task.FromResult<Property?>(updatedProperty);
     }
 
-    public bool Delete(int id)
+    public Task<bool> DeleteAsync(int id)
     {
         var propertyToRemove = _properties.FirstOrDefault(p => p.Id == id);
 
         if (propertyToRemove is null)
-            return false;
+            return Task.FromResult(false);
 
         _properties.Remove(propertyToRemove);
-        return true;
+        return Task.FromResult(true);
     }
 
-    public PropertyStatistics GetStatistics()
+    public Task<PropertyStatistics> GetStatisticsAsync()
     {
-        return new PropertyStatistics
+        var stats = new PropertyStatistics
         {
             TotalProperties = _properties.Count,
             OccupiedProperties = _properties.Count(p => p.Status == PropertyStatus.Occupied),
@@ -95,6 +96,8 @@ public sealed class InMemoryPropertyStorage : IPropertyStorage
                 .GroupBy(p => p.Currency.ToString())
                 .ToDictionary(g => g.Key, g => g.Count()),
         };
+
+        return Task.FromResult(stats);
     }
 
     private static List<Property> BuildSeedProperties() =>

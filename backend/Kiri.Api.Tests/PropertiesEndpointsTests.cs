@@ -8,8 +8,6 @@ namespace Kiri.Api.Tests;
 
 public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private const int SeedPropertyCount = 8;
-
     private readonly HttpClient _client;
 
     public PropertiesEndpointsTests(WebApplicationFactory<Program> factory)
@@ -30,50 +28,57 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         Tenants = [],
     };
 
+    private async Task<Property> CreateSamplePropertyAsync() =>
+        (await (await _client.PostAsJsonAsync("/api/properties", SamplePropertyFormData()))
+            .Content.ReadFromJsonAsync<Property>())!;
+
     [Fact]
-    public async Task GetAll_WithDefaultPagination_ReturnsFirstPageOfSeedProperties()
+    public async Task GetAll_WithDefaultPagination_ReturnsOk()
     {
         var response = await _client.GetAsync("/api/properties");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>();
         result.Should().NotBeNull();
-        result!.TotalCount.Should().Be(SeedPropertyCount);
-        result.Page.Should().Be(1);
+        result!.Page.Should().Be(1);
     }
 
     [Fact]
-    public async Task GetAll_WithPageSizeOfOne_ReturnsSingleItem()
+    public async Task GetAll_WithPageSizeOfOne_AfterCreating_ReturnsSingleItem()
     {
+        await CreateSamplePropertyAsync();
+
         var response = await _client.GetAsync("/api/properties?page=1&pageSize=1");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>();
         result!.Items.Should().HaveCount(1);
-        result.TotalCount.Should().Be(SeedPropertyCount);
-        result.TotalPages.Should().Be(SeedPropertyCount);
     }
 
     [Fact]
     public async Task GetAll_FilteredByStatus_ReturnsOnlyMatchingProperties()
     {
+        await CreateSamplePropertyAsync(); // Vacant
+        await _client.PostAsJsonAsync("/api/properties",
+            SamplePropertyFormData() with { Status = PropertyStatus.Occupied });
+
         var response = await _client.GetAsync("/api/properties?status=Vacant");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>();
         result!.Items.Should().OnlyContain(p => p.Status == PropertyStatus.Vacant);
-        result.TotalCount.Should().Be(2);
     }
 
     [Fact]
     public async Task GetById_ExistingId_ReturnsProperty()
     {
-        var response = await _client.GetAsync("/api/properties/1");
+        var created = await CreateSamplePropertyAsync();
+
+        var response = await _client.GetAsync($"/api/properties/{created.Id}");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var property = await response.Content.ReadFromJsonAsync<Property>();
-        property.Should().NotBeNull();
-        property!.Id.Should().Be(1);
+        property!.Id.Should().Be(created.Id);
     }
 
     [Fact]
@@ -109,9 +114,10 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
     [Fact]
     public async Task Update_ExistingProperty_ReturnsUpdatedProperty()
     {
+        var created = await CreateSamplePropertyAsync();
         var updatedData = SamplePropertyFormData() with { Rent = 999, Status = PropertyStatus.Occupied };
 
-        var response = await _client.PutAsJsonAsync("/api/properties/1", updatedData);
+        var response = await _client.PutAsJsonAsync($"/api/properties/{created.Id}", updatedData);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var updated = await response.Content.ReadFromJsonAsync<Property>();
@@ -129,7 +135,9 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
     [Fact]
     public async Task Delete_ExistingProperty_ReturnsNoContent()
     {
-        var response = await _client.DeleteAsync("/api/properties/1");
+        var created = await CreateSamplePropertyAsync();
+
+        var response = await _client.DeleteAsync($"/api/properties/{created.Id}");
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
@@ -141,16 +149,16 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
     }
 
     [Fact]
-    public async Task GetStatistics_WithSeedData_ReturnsCorrectStructure()
+    public async Task GetStatistics_ReturnsCorrectStructure()
     {
+        await CreateSamplePropertyAsync();
+
         var response = await _client.GetAsync("/api/properties/statistics");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var stats = await response.Content.ReadFromJsonAsync<PropertyStatistics>();
         stats.Should().NotBeNull();
-        stats!.TotalProperties.Should().Be(SeedPropertyCount);
-        stats.OccupiedProperties.Should().Be(6);
-        stats.VacantProperties.Should().Be(2);
+        stats!.TotalProperties.Should().BePositive();
         stats.TotalMonthlyRent.Should().BePositive();
     }
 }
