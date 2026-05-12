@@ -17,16 +17,32 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.SerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-
     options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 
 builder.Services.AddScoped<IPropertyStorage, SqlPropertyStorage>();
+builder.Services.AddScoped<IUserStorage, SqlUserStorage>();
 builder.Services.AddValidatorsFromAssemblyContaining<PropertyFormDataValidator>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
+    options.AddDefaultPolicy(policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.Name = "kiri_session";
+    options.IdleTimeout = TimeSpan.FromHours(2);
 });
 
 builder.Services.AddDbContext<KiriDbContext>(options =>
@@ -37,6 +53,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<KiriDbContext>();
+    await db.Database.MigrateAsync();
     await DbSeeder.SeedAsync(db);
 }
 
@@ -47,7 +64,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.UseSession();
 app.MapPropertiesEndpoints();
+app.MapAuthEndpoints();
 
 app.Run();
 
