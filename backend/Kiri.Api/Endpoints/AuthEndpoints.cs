@@ -68,6 +68,7 @@ public static class AuthEndpoints
     private static IResult Logout(HttpContext context)
     {
         context.Session.Clear();
+        context.Response.Cookies.Delete("kiri_session");
         return Results.NoContent();
     }
 
