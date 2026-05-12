@@ -22,8 +22,8 @@ export const PropertySchema = z.object({
   city: z.string(),
   postalCode: z.string(),
   rent: z.number(),
-  currency: z.number(),
-  status: z.number(),
+  currency: z.enum(["RON", "EUR", "USD", "GBP"]),
+  status: z.enum(["Vacant", "Occupied"]),
   tenants: z.array(TenantSchema),
   dateAdded: z.string(),
   lastUpdated: z.string(),
@@ -38,9 +38,6 @@ export const PropertyFormSchema = PropertySchema.omit({
 export type Tenant = z.infer<typeof TenantSchema>;
 export type Property = z.infer<typeof PropertySchema>;
 export type PropertyFormData = z.infer<typeof PropertyFormSchema>;
-
-export const CurrencyEnum = { RON: 0, EUR: 1, USD: 2 } as const;
-export const StatusEnum = { Vacant: 0, Occupied: 1 } as const;
 
 type PropertyStore = {
   properties: Property[];

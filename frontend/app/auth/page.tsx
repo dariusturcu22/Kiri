@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff, KeyRound, House } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { toast } from "sonner";
@@ -10,7 +9,6 @@ type Tab = "login" | "register";
 type Role = "Landlord" | "Tenant";
 
 export default function AuthPage() {
-  const router = useRouter();
   const { login, register } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<Tab>("login");
@@ -35,7 +33,7 @@ export default function AuthPage() {
     setFieldErrors({});
     try {
       await login(loginForm.email, loginForm.password);
-      router.push("/properties");
+      window.location.href = "/properties";
     } catch {
       setFieldErrors({ password: "Invalid email or password." });
     } finally {
@@ -67,7 +65,7 @@ export default function AuthPage() {
 
     try {
       await register({ ...registerForm, role: selectedRole });
-      router.push("/properties");
+      window.location.href = "/properties";
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??

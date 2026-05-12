@@ -1,4 +1,6 @@
+using System.Text.Json;
 using BCrypt.Net;
+using Kiri.Api.Data;
 using Kiri.Api.Models;
 using Kiri.Api.Storage;
 
@@ -19,7 +21,7 @@ public static class AuthEndpoints
         group.MapGet("/users", GetUsers);
     }
 
-    private static async Task<IResult> Register(RegisterRequest request, IUserStorage storage)
+    private static async Task<IResult> Register(RegisterRequest request, IUserStorage storage, KiriDbContext db, HttpContext context)
     {
         if (string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Password) ||
@@ -43,10 +45,13 @@ public static class AuthEndpoints
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
         var user = await storage.CreateAsync(request.Email, passwordHash, request.FirstName, request.LastName, request.Role);
 
+        await AppendActionLog(db, context, user.Id, user.Role.Name, ActionTypes.Register,
+            new { email = user.Email, role = user.Role.Name }, success: true);
+
         return Results.Created($"/api/auth/me", ToResponse(user));
     }
 
-    private static async Task<IResult> Login(LoginRequest request, IUserStorage storage, HttpContext context)
+    private static async Task<IResult> Login(LoginRequest request, IUserStorage storage, KiriDbContext db, HttpContext context)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             return Results.BadRequest(new { Message = "Email and password are required." });
@@ -54,7 +59,13 @@ public static class AuthEndpoints
         var user = await storage.FindByEmailAsync(request.Email);
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            var failedUserId = user?.Id ?? 0;
+            var failedRole = user?.Role?.Name ?? "Unknown";
+            await AppendActionLog(db, context, failedUserId, failedRole, ActionTypes.LoginFailed,
+                new { email = request.Email }, success: false);
             return Results.Unauthorized();
+        }
 
         context.Session.SetInt32(SessionKeys.UserId, user.Id);
         context.Session.SetString(SessionKeys.UserRole, user.Role.Name);
@@ -62,11 +73,20 @@ public static class AuthEndpoints
         context.Session.SetString(SessionKeys.UserFirstName, user.FirstName);
         context.Session.SetString(SessionKeys.UserLastName, user.LastName);
 
+        await AppendActionLog(db, context, user.Id, user.Role.Name, ActionTypes.Login,
+            new { email = user.Email }, success: true);
+
         return Results.Ok(ToResponse(user));
     }
 
-    private static IResult Logout(HttpContext context)
+    private static async Task<IResult> Logout(HttpContext context, KiriDbContext db)
     {
+        var userId = context.Session.GetInt32(SessionKeys.UserId) ?? 0;
+        var userRole = context.Session.GetString(SessionKeys.UserRole) ?? "Unknown";
+
+        await AppendActionLog(db, context, userId, userRole, ActionTypes.Logout,
+            new { }, success: true);
+
         context.Session.Clear();
         context.Response.Cookies.Delete("kiri_session");
         return Results.NoContent();
@@ -103,6 +123,23 @@ public static class AuthEndpoints
             .ToList();
 
         return Results.Ok(otherUsers);
+    }
+
+    private static async Task AppendActionLog(KiriDbContext db, HttpContext context, int userId, string userRole,
+        string actionType, object details, bool success)
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        db.ActionLogs.Add(new ActionLog
+        {
+            UserId = userId,
+            UserRole = userRole,
+            ActionType = actionType,
+            ActionDetails = JsonSerializer.Serialize(details),
+            Timestamp = DateTime.UtcNow,
+            IpAddress = ip,
+            Success = success
+        });
+        await db.SaveChangesAsync();
     }
 
     private static UserResponse ToResponse(User user) =>
