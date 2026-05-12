@@ -1,4 +1,4 @@
-﻿using Kiri.Api.Models;
+using Kiri.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Kiri.Api.Data;
@@ -7,6 +7,9 @@ public sealed class KiriDbContext(DbContextOptions<KiriDbContext> options) : DbC
 {
     public DbSet<Property> Properties => Set<Property>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Permission> Permissions => Set<Permission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,6 +29,31 @@ public sealed class KiriDbContext(DbContextOptions<KiriDbContext> options) : DbC
         {
             entity.HasKey(t => t.Id);
             entity.Ignore(t => t.Initials);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(u => u.Id);
+            entity.HasIndex(u => u.Email).IsUnique();
+            entity.HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleId);
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.HasIndex(r => r.Name).IsUnique();
+            entity
+                .HasMany(r => r.Permissions)
+                .WithMany(p => p.Roles)
+                .UsingEntity("RolePermissions");
+        });
+
+        modelBuilder.Entity<Permission>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.HasIndex(p => p.Name).IsUnique();
         });
     }
 }

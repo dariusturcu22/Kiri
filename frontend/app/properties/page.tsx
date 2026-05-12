@@ -6,6 +6,7 @@ import { Eye, Pencil, Trash2, Search, Bell, Plus } from "lucide-react";
 import { usePropertyStore } from "@/store/properties";
 import type { Property } from "@/store/properties";
 import Sidebar from "@/components/Sidebar";
+import StatisticsPanel from "@/components/StatisticsPanel";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -126,6 +127,12 @@ export default function PropertiesPage() {
         </header>
 
         <div className="p-8">
+          {showStats && (
+            <div className="mb-8">
+              <StatisticsPanel />
+            </div>
+          )}
+
           <div className="bg-white rounded-3xl overflow-hidden shadow-sm">
             <div className={`${COL_GRID} bg-cream-warm py-3`}>
               {[

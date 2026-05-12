@@ -130,22 +130,25 @@ const MAINTENANCE_HISTORY = [
   },
 ];
 
-const QUICK_ACTIONS = [
-  { icon: MessageCircle, label: "Open Chat with Tenants" },
-  { icon: FileUp, label: "Upload Invoice PDF" },
-  { icon: BarChart3, label: "Generate Report" },
+const buildQuickActions = (onOpenChat: () => void) => [
+  { icon: MessageCircle, label: "Open Chat with Tenants", onClick: onOpenChat },
+  { icon: FileUp, label: "Upload Invoice PDF", onClick: () => {} },
+  { icon: BarChart3, label: "Generate Report", onClick: () => {} },
 ];
 
-const sidebarLinks = [
-  { label: "Maintenance", icon: Zap, active: false, onClick: () => {} },
-  { label: "Scheduling", icon: Calendar, active: false, onClick: () => {} },
-  { label: "Contract", icon: FileText, active: false, onClick: () => {} },
-  { label: "Chat", icon: MessageSquare, active: false, onClick: () => {} },
-];
 
 export default function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
+
+  const sidebarLinks = [
+    { label: "Maintenance", icon: Zap, onClick: () => {} },
+    { label: "Scheduling", icon: Calendar, onClick: () => {} },
+    { label: "Contract", icon: FileText, onClick: () => {} },
+    { label: "Chat", icon: MessageSquare, onClick: () => router.push("/chat") },
+  ];
+
+  const quickActions = buildQuickActions(() => router.push("/chat"));
   const { getPropertyById, deleteProperty } = usePropertyStore();
 
   const propertyId = Number(params.id);
@@ -571,9 +574,10 @@ export default function PropertyDetailPage() {
                   Quick Actions
                 </h3>
                 <div className="flex flex-col gap-2.5">
-                  {QUICK_ACTIONS.map(({ icon: Icon, label }) => (
+                  {quickActions.map(({ icon: Icon, label, onClick }) => (
                     <button
                       key={label}
+                      onClick={onClick}
                       className="bg-white/10 border border-white/15 h-10 rounded-full flex items-center justify-center gap-2 font-bold text-white text-[13px] hover:bg-white/20 transition-colors"
                     >
                       <Icon className="w-4 h-4" />
