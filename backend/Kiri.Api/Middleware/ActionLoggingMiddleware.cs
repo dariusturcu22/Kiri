@@ -11,11 +11,11 @@ public sealed class ActionLoggingMiddleware(RequestDelegate next)
     private static readonly Dictionary<string, string> RouteToActionType = new()
     {
         { "POST /api/properties", ActionTypes.CreateProperty },
-        { "PUT /api/properties", ActionTypes.UpdateProperty },
-        { "DELETE /api/properties", ActionTypes.DeleteProperty },
+        { "PUT /api/properties/{id}", ActionTypes.UpdateProperty },
+        { "DELETE /api/properties/{id}", ActionTypes.DeleteProperty },
         { "POST /api/tenants", ActionTypes.CreateTenant },
-        { "PUT /api/tenants", ActionTypes.UpdateTenant },
-        { "DELETE /api/tenants", ActionTypes.DeleteTenant },
+        { "PUT /api/tenants/{id}", ActionTypes.UpdateTenant },
+        { "DELETE /api/tenants/{id}", ActionTypes.DeleteTenant },
     };
 
     public async Task InvokeAsync(HttpContext context, KiriDbContext db)

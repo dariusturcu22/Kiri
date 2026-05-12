@@ -7,7 +7,7 @@ namespace Kiri.Api.Services;
 public sealed class BehaviourDetectionService(IServiceScopeFactory scopeFactory, ILogger<BehaviourDetectionService> logger)
     : BackgroundService
 {
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(10);
     private const int BruteForceLoginThreshold = 5;
     private static readonly TimeSpan BruteForceWindow = TimeSpan.FromMinutes(5);
     private const int RapidDeletionThreshold = 5;
