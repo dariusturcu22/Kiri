@@ -27,12 +27,18 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="text-sm font-semibold text-brown-light hover:text-cream-bg transition-colors bg-transparent border-none cursor-pointer">
+          <Link
+            href="/auth"
+            className="text-sm font-semibold text-brown-light hover:text-cream-bg transition-colors no-underline"
+          >
             Sign In
-          </button>
-          <button className="bg-green-dark text-cream-bg px-6 py-2 rounded-full text-sm font-bold hover:bg-green-hover transition-colors border-none cursor-pointer">
+          </Link>
+          <Link
+            href="/auth"
+            className="bg-green-dark text-cream-bg px-6 py-2 rounded-full text-sm font-bold hover:bg-green-hover transition-colors no-underline"
+          >
             Get Started
-          </button>
+          </Link>
         </div>
       </div>
     </nav>
