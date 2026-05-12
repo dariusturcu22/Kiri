@@ -1,10 +1,98 @@
-﻿using Kiri.Api.Models;
+using BCrypt.Net;
+using Kiri.Api.Models;
 
 namespace Kiri.Api.Data;
 
 public static class DbSeeder
 {
     public static async Task SeedAsync(KiriDbContext db)
+    {
+        await SeedRolesAndPermissionsAsync(db);
+        await SeedPropertiesAsync(db);
+    }
+
+    private static async Task SeedRolesAndPermissionsAsync(KiriDbContext db)
+    {
+        if (db.Roles.Any())
+            return;
+
+        var allPermissions = new List<Permission>
+        {
+            new() { Name = PermissionNames.ManageProperties },
+            new() { Name = PermissionNames.ViewProperties },
+            new() { Name = PermissionNames.ManageTenants },
+            new() { Name = PermissionNames.ViewMaintenance },
+            new() { Name = PermissionNames.CreateMaintenance },
+            new() { Name = PermissionNames.ResolveMaintenance },
+            new() { Name = PermissionNames.ManageContracts },
+            new() { Name = PermissionNames.ViewContracts },
+            new() { Name = PermissionNames.ManageUtilities },
+            new() { Name = PermissionNames.ViewUtilities },
+            new() { Name = PermissionNames.ScheduleVisits },
+            new() { Name = PermissionNames.ViewAdminPanel },
+        };
+
+        db.Permissions.AddRange(allPermissions);
+        await db.SaveChangesAsync();
+
+        Permission Get(string name) => allPermissions.First(p => p.Name == name);
+
+        var adminRole = new Role
+        {
+            Name = RoleNames.Admin,
+            Permissions = allPermissions,
+        };
+
+        var landlordRole = new Role
+        {
+            Name = RoleNames.Landlord,
+            Permissions =
+            [
+                Get(PermissionNames.ManageProperties),
+                Get(PermissionNames.ViewProperties),
+                Get(PermissionNames.ManageTenants),
+                Get(PermissionNames.ViewMaintenance),
+                Get(PermissionNames.ResolveMaintenance),
+                Get(PermissionNames.ManageContracts),
+                Get(PermissionNames.ViewContracts),
+                Get(PermissionNames.ManageUtilities),
+                Get(PermissionNames.ViewUtilities),
+                Get(PermissionNames.ScheduleVisits),
+            ],
+        };
+
+        var tenantRole = new Role
+        {
+            Name = RoleNames.Tenant,
+            Permissions =
+            [
+                Get(PermissionNames.ViewProperties),
+                Get(PermissionNames.ViewMaintenance),
+                Get(PermissionNames.CreateMaintenance),
+                Get(PermissionNames.ViewContracts),
+                Get(PermissionNames.ViewUtilities),
+                Get(PermissionNames.ScheduleVisits),
+            ],
+        };
+
+        db.Roles.AddRange(adminRole, landlordRole, tenantRole);
+        await db.SaveChangesAsync();
+
+        var adminUser = new User
+        {
+            Email = "admin@kiri.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+            FirstName = "Admin",
+            LastName = "Kiri",
+            RoleId = adminRole.Id,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        db.Users.Add(adminUser);
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedPropertiesAsync(KiriDbContext db)
     {
         if (db.Properties.Any())
             return;
