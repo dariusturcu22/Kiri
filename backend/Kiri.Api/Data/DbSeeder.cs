@@ -8,6 +8,7 @@ public static class DbSeeder
     public static async Task SeedAsync(KiriDbContext db)
     {
         await SeedRolesAndPermissionsAsync(db);
+        await SeedDemoUsersAsync(db);
         await SeedPropertiesAsync(db);
     }
 
@@ -77,38 +78,42 @@ public static class DbSeeder
 
         db.Roles.AddRange(adminRole, landlordRole, tenantRole);
         await db.SaveChangesAsync();
+    }
 
-        var adminUser = new User
+    private static async Task SeedDemoUsersAsync(KiriDbContext db)
+    {
+        var demoEmails = new[] { "admin@kiri.com", "landlord@kiri.com", "tenant@kiri.com" };
+
+        foreach (var email in demoEmails)
         {
-            Email = "admin@kiri.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
-            FirstName = "Admin",
-            LastName = "Kiri",
-            RoleId = adminRole.Id,
-            CreatedAt = DateTime.UtcNow,
-        };
+            if (db.Users.Any(u => u.Email == email))
+                continue;
 
-        var landlordUser = new User
-        {
-            Email = "landlord@kiri.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Landlord123!"),
-            FirstName = "Ion",
-            LastName = "Popescu",
-            RoleId = landlordRole.Id,
-            CreatedAt = DateTime.UtcNow,
-        };
+            var role = email switch
+            {
+                "admin@kiri.com" => db.Roles.First(r => r.Name == RoleNames.Admin),
+                "landlord@kiri.com" => db.Roles.First(r => r.Name == RoleNames.Landlord),
+                _ => db.Roles.First(r => r.Name == RoleNames.Tenant),
+            };
 
-        var tenantUser = new User
-        {
-            Email = "tenant@kiri.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Tenant123!"),
-            FirstName = "Alex",
-            LastName = "Moldovan",
-            RoleId = tenantRole.Id,
-            CreatedAt = DateTime.UtcNow,
-        };
+            var (firstName, lastName, password) = email switch
+            {
+                "admin@kiri.com" => ("Admin", "Kiri", "Admin123!"),
+                "landlord@kiri.com" => ("Ion", "Popescu", "Landlord123!"),
+                _ => ("Alex", "Moldovan", "Tenant123!"),
+            };
 
-        db.Users.AddRange(adminUser, landlordUser, tenantUser);
+            db.Users.Add(new User
+            {
+                Email = email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                FirstName = firstName,
+                LastName = lastName,
+                RoleId = role.Id,
+                CreatedAt = DateTime.UtcNow,
+            });
+        }
+
         await db.SaveChangesAsync();
     }
 
