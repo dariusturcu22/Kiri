@@ -81,10 +81,10 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm flex flex-col items-center gap-8">
-        <div className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2 no-underline">
           <span className="text-2xl font-extrabold text-[#1E1208]">Kiri</span>
           <img src="/logo.png" alt="Kiri" className="w-6 h-6" />
-        </div>
+        </a>
 
         <div className="w-full bg-[#EDE8DF] p-1 rounded-full flex">
           <button
