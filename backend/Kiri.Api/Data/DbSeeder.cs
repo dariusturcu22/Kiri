@@ -88,7 +88,27 @@ public static class DbSeeder
             CreatedAt = DateTime.UtcNow,
         };
 
-        db.Users.Add(adminUser);
+        var landlordUser = new User
+        {
+            Email = "landlord@kiri.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Landlord123!"),
+            FirstName = "Ion",
+            LastName = "Popescu",
+            RoleId = landlordRole.Id,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        var tenantUser = new User
+        {
+            Email = "tenant@kiri.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Tenant123!"),
+            FirstName = "Alex",
+            LastName = "Moldovan",
+            RoleId = tenantRole.Id,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        db.Users.AddRange(adminUser, landlordUser, tenantUser);
         await db.SaveChangesAsync();
     }
 
