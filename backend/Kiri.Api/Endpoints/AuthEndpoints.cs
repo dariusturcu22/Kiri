@@ -16,6 +16,7 @@ public static class AuthEndpoints
         group.MapPost("/login", Login);
         group.MapPost("/logout", Logout);
         group.MapGet("/me", Me);
+        group.MapGet("/users", GetUsers);
     }
 
     private static async Task<IResult> Register(RegisterRequest request, IUserStorage storage)
@@ -86,6 +87,21 @@ public static class AuthEndpoints
         );
 
         return Results.Ok(response);
+    }
+
+    private static async Task<IResult> GetUsers(IUserStorage storage, HttpContext context)
+    {
+        var currentUserId = context.Session.GetInt32(SessionKeys.UserId);
+        if (currentUserId is null)
+            return Results.Unauthorized();
+
+        var users = await storage.GetAllAsync();
+        var otherUsers = users
+            .Where(u => u.Id != currentUserId)
+            .Select(ToResponse)
+            .ToList();
+
+        return Results.Ok(otherUsers);
     }
 
     private static UserResponse ToResponse(User user) =>

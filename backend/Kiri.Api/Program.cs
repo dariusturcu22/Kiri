@@ -1,10 +1,12 @@
 using System.Text.Json;
 using FluentValidation;
 using Kiri.Api.Endpoints;
+using Kiri.Api.Hubs;
 using Kiri.Api.Storage;
 using Kiri.Api.Validators;
 using Kiri.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +24,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 builder.Services.AddScoped<IPropertyStorage, SqlPropertyStorage>();
 builder.Services.AddScoped<IUserStorage, SqlUserStorage>();
+builder.Services.AddSingleton<IMongoClient>(_ =>
+    new MongoClient(builder.Configuration.GetConnectionString("MongoDb")));
+builder.Services.AddSingleton<IChatStorage, MongoChatStorage>();
+builder.Services.AddSignalR();
 builder.Services.AddValidatorsFromAssemblyContaining<PropertyFormDataValidator>();
 
 builder.Services.AddCors(options =>
@@ -67,6 +73,8 @@ app.UseCors();
 app.UseSession();
 app.MapPropertiesEndpoints();
 app.MapAuthEndpoints();
+app.MapChatEndpoints();
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();
 

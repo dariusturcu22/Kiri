@@ -42,4 +42,7 @@ public sealed class SqlUserStorage(KiriDbContext db) : IUserStorage
 
     public async Task<Role?> FindRoleByNameAsync(string roleName) =>
         await db.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+
+    public async Task<IReadOnlyList<User>> GetAllAsync() =>
+        await db.Users.Include(u => u.Role).ToListAsync();
 }

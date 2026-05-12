@@ -8,4 +8,5 @@ public interface IUserStorage
     Task<bool> EmailExistsAsync(string email);
     Task<User> CreateAsync(string email, string passwordHash, string firstName, string lastName, string roleName);
     Task<Role?> FindRoleByNameAsync(string roleName);
+    Task<IReadOnlyList<User>> GetAllAsync();
 }
