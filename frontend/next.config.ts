@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["192.168.8.114"],
+  allowedDevOrigins: ["192.168.8.114", "192.168.56.1", "localhost"],
 };
 
 export default nextConfig;
