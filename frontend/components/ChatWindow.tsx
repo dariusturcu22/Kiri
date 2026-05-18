@@ -42,7 +42,7 @@ export default function ChatWindow({ currentUser, selectedUser }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       <div className="px-6 py-4 bg-white border-b border-[#EDE8DF] flex items-center gap-3">
         <div className="w-9 h-9 rounded-full bg-[#3A5230] flex items-center justify-center shrink-0">
           <span className="text-xs font-bold text-white">

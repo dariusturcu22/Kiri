@@ -1,5 +1,6 @@
 using Kiri.Api.Models;
 using Kiri.Api.Storage;
+using System.Security.Claims;
 
 namespace Kiri.Api.Endpoints;
 
@@ -20,20 +21,18 @@ public static class ChatEndpoints
         IChatStorage chatStorage,
         HttpContext context)
     {
-        var currentUserId = context.Session.GetInt32(SessionKeys.UserId);
-
-        if (currentUserId is null)
+        var raw = context.User?.FindFirst(JwtClaimKeys.UserId)?.Value;
+        if (!int.TryParse(raw, out var currentUserId))
             return Results.Unauthorized();
 
-        var messages = await chatStorage.GetConversationAsync(currentUserId.Value, otherUserId, ConversationHistoryLimit);
+        var messages = await chatStorage.GetConversationAsync(currentUserId, otherUserId, ConversationHistoryLimit);
         return Results.Ok(messages);
     }
 
     private static IResult GetOnlineUsersList(IUserStorage userStorage, HttpContext context)
     {
-        var currentUserId = context.Session.GetInt32(SessionKeys.UserId);
-
-        if (currentUserId is null)
+        var raw = context.User?.FindFirst(JwtClaimKeys.UserId)?.Value;
+        if (!int.TryParse(raw, out _))
             return Results.Unauthorized();
 
         return Results.Ok(new { message = "Use /api/auth/me and register endpoint to list users for chat." });

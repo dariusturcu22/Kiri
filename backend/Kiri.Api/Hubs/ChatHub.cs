@@ -2,6 +2,7 @@ using Kiri.Api.Models;
 using Kiri.Api.Storage;
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
+using System.Security.Claims;
 
 namespace Kiri.Api.Hubs;
 
@@ -66,14 +67,14 @@ public sealed class ChatHub(IChatStorage chatStorage) : Hub
 
     private int? GetCurrentUserId()
     {
-        var value = Context.GetHttpContext()?.Session.GetInt32(SessionKeys.UserId);
-        return value;
+        var raw = Context.User?.FindFirst(JwtClaimKeys.UserId)?.Value;
+        return int.TryParse(raw, out var id) ? id : null;
     }
 
     private string? GetCurrentUserName()
     {
-        var firstName = Context.GetHttpContext()?.Session.GetString(SessionKeys.UserFirstName);
-        var lastName = Context.GetHttpContext()?.Session.GetString(SessionKeys.UserLastName);
+        var firstName = Context.User?.FindFirst(JwtClaimKeys.FirstName)?.Value;
+        var lastName = Context.User?.FindFirst(JwtClaimKeys.LastName)?.Value;
         if (firstName is null) return null;
         return $"{firstName} {lastName}".Trim();
     }

@@ -43,9 +43,24 @@ builder.Services.AddCors(options =>
             .SetIsOriginAllowed(origin =>
             {
                 var host = new Uri(origin).Host;
-                return host == "localhost" ||
-                       host.Equals("desktop-l6p46o3.local", StringComparison.OrdinalIgnoreCase) ||
-                       host.Equals("desktop-l6p46o3", StringComparison.OrdinalIgnoreCase);
+                if (host == "localhost" ||
+                    host.Equals("desktop-l6p46o3.local", StringComparison.OrdinalIgnoreCase) ||
+                    host.Equals("desktop-l6p46o3", StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                // Allow private-network IP addresses (LAN access from mobile)
+                if (System.Net.IPAddress.TryParse(host, out var ip))
+                {
+                    var bytes = ip.GetAddressBytes();
+                    if (bytes.Length == 4)
+                    {
+                        return bytes[0] == 10 ||
+                               (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) ||
+                               (bytes[0] == 192 && bytes[1] == 168);
+                    }
+                }
+
+                return false;
             })
             .AllowAnyMethod()
             .AllowAnyHeader()

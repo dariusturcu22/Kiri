@@ -54,18 +54,20 @@ const gridColor = "#EDE8DF";
 
 export default function StatisticsPanel() {
   const [stats, setStats] = useState<PropertyStatistics | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     api
       .get<PropertyStatistics>("/api/properties/statistics")
       .then((res) => setStats(res.data))
       .catch(() => {});
   }, []);
 
-  if (!stats) {
+  if (!mounted || !stats) {
     return (
       <div className="flex items-center justify-center h-64 text-sm text-[#6B7E94]">
-        Loading statistics...
+        {mounted ? "Loading statistics..." : ""}
       </div>
     );
   }
@@ -80,7 +82,7 @@ export default function StatisticsPanel() {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       <div className="bg-white rounded-3xl p-6 shadow-sm flex flex-col gap-6">
         <h2 className="text-base font-bold text-[#1E1208]">Occupancy Rate</h2>
 
