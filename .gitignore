@@ -24,3 +24,4 @@ Thumbs.db
 .vscode/
 .idea/
 backend/Kiri.Api/Migrations/
+.claude/worktrees/
