@@ -10,13 +10,13 @@ export function middleware(request: NextRequest) {
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );
 
-  const hasSession = request.cookies.has("kiri_session");
+  const hasToken = request.cookies.has("kiri_token");
 
-  if (!hasSession && !isPublicPath) {
+  if (!hasToken && !isPublicPath) {
     return NextResponse.redirect(new URL("/auth", request.url));
   }
 
-  if (hasSession && pathname === "/auth") {
+  if (hasToken && pathname === "/auth") {
     return NextResponse.redirect(new URL("/properties", request.url));
   }
 
