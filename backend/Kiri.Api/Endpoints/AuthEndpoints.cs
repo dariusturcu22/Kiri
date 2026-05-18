@@ -55,7 +55,7 @@ public static class AuthEndpoints
         await AppendActionLog(db, context, user.Id, user.Role.Name, ActionTypes.Register,
             new { email = user.Email, role = user.Role.Name }, success: true);
 
-        return Results.Created("/api/auth/me", ToResponse(user));
+        return Results.Created("/api/auth/me", ToAuthResponse(user, token));
     }
 
     private static async Task<IResult> Login(
@@ -80,7 +80,7 @@ public static class AuthEndpoints
         await AppendActionLog(db, context, user.Id, user.Role.Name, ActionTypes.Login,
             new { email = user.Email }, success: true);
 
-        return Results.Ok(ToResponse(user));
+        return Results.Ok(ToAuthResponse(user, token));
     }
 
     private static async Task<IResult> Logout(HttpContext context, KiriDbContext db)
@@ -168,4 +168,11 @@ public static class AuthEndpoints
 
     private static UserResponse ToResponse(User user) =>
         new(user.Id, user.Email, user.FirstName, user.LastName, user.Role.Name);
+
+    private static AuthResponse ToAuthResponse(User user, string token) =>
+        new(user.Id, user.Email, user.FirstName, user.LastName, user.Role.Name, token);
+
+    private record AuthResponse(
+        int Id, string Email, string FirstName, string LastName, string Role,
+        string Token);
 }

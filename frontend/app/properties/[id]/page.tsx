@@ -212,7 +212,7 @@ export default function PropertyDetailPage() {
     <div className="flex min-h-screen bg-white font-sans">
       <Sidebar items={sidebarLinks} />
 
-      <main className="flex-1 bg-cream-bg overflow-auto">
+      <main className="flex-1 bg-cream-bg overflow-auto pb-16 md:pb-0">
         <div className="relative h-55 w-full overflow-hidden">
           <img
             src={property.image || "/logo.png"}
@@ -221,7 +221,7 @@ export default function PropertyDetailPage() {
           />
           <div className="absolute inset-0 bg-linear-to-b from-[rgba(30,18,8,0.72)] to-[rgba(30,18,8,0.45)]" />
 
-          <div className="absolute inset-0 flex items-center justify-between px-9">
+          <div className="absolute inset-0 flex items-center justify-between px-4 md:px-9 gap-3">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <button
@@ -236,7 +236,7 @@ export default function PropertyDetailPage() {
                 </span>
               </div>
 
-              <h1 className="font-extrabold text-cream-bg text-[40px] leading-tight">
+              <h1 className="font-extrabold text-cream-bg text-2xl md:text-[40px] leading-tight">
                 {property.name}
               </h1>
 
@@ -254,12 +254,12 @@ export default function PropertyDetailPage() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               <button
                 onClick={() => router.push(`/properties/${propertyId}/edit`)}
-                className="bg-white/15 border border-white/30 px-5 h-9 rounded-full font-bold text-white text-[13px] hover:bg-white/25 transition-colors"
+                className="bg-white/15 border border-white/30 px-3 md:px-5 h-9 rounded-full font-bold text-white text-[13px] hover:bg-white/25 transition-colors"
               >
-                Edit Property
+                Edit
               </button>
               <AlertDialog>
                 <AlertDialogTrigger className="bg-white/15 border border-white/30 px-5 h-9 rounded-full font-bold text-white text-[13px] hover:bg-rose-500/60 transition-colors">
@@ -289,7 +289,7 @@ export default function PropertyDetailPage() {
           </div>
         </div>
 
-        <div className="bg-white border-b border-cream-warm h-18.25 px-9 flex items-center gap-5">
+        <div className="bg-white border-b border-cream-warm min-h-[72px] px-4 md:px-9 flex flex-wrap items-center gap-3 md:gap-5 py-3">
           <span className="font-bold text-slate text-[11px] tracking-[2px] uppercase shrink-0">
             Tenants
           </span>
@@ -317,10 +317,10 @@ export default function PropertyDetailPage() {
           </button>
         </div>
 
-        <div className="px-9 py-6">
-          <div className="flex gap-6">
+        <div className="px-4 md:px-9 py-6">
+          <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1 flex flex-col gap-4 min-w-0">
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 bg-white rounded-[24px] border border-cream-warm p-5.75 shadow-[0px_2px_10px_0px_rgba(44,26,14,0.06)]">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-brown-dark text-[15px]">
@@ -397,7 +397,7 @@ export default function PropertyDetailPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 bg-[#f0ddd4] rounded-[24px] p-5.5">
                   <h3 className="font-bold text-brown-dark text-[15px] mb-4">
                     Utilities — Jan 2026
@@ -531,7 +531,7 @@ export default function PropertyDetailPage() {
               </div>
             </div>
 
-            <div className="w-90 flex flex-col gap-4 shrink-0">
+            <div className="w-full md:w-90 flex flex-col gap-4 md:shrink-0">
               <div className="bg-white rounded-[24px] border border-cream-warm p-5.75 shadow-[0px_2px_10px_0px_rgba(44,26,14,0.06)]">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-brown-dark text-[15px]">

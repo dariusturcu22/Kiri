@@ -9,6 +9,16 @@ export type AuthUser = {
   role: string;
 };
 
+// Backend includes the JWT token in login/register responses so the frontend
+// can set the cookie client-side. This is a fallback for mobile Chrome, which
+// silently drops server-side Set-Cookie headers when the TLS cert is untrusted.
+type AuthResponse = AuthUser & { token?: string };
+
+function setClientCookie(token: string, expiryHours = 2) {
+  const expires = new Date(Date.now() + expiryHours * 60 * 60 * 1000).toUTCString();
+  document.cookie = `kiri_token=${token}; path=/; SameSite=Lax; expires=${expires}`;
+}
+
 type AuthStore = {
   user: AuthUser | null;
   isLoading: boolean;
@@ -41,20 +51,25 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   login: async (email, password) => {
-    const response = await api.post<AuthUser>("/api/auth/login", {
+    const response = await api.post<AuthResponse>("/api/auth/login", {
       email,
       password,
     });
-    set({ user: response.data });
+    const { token, ...userData } = response.data;
+    if (token) setClientCookie(token);
+    set({ user: userData as AuthUser });
   },
 
   register: async (data) => {
-    const response = await api.post<AuthUser>("/api/auth/register", data);
-    set({ user: response.data });
+    const response = await api.post<AuthResponse>("/api/auth/register", data);
+    const { token, ...userData } = response.data;
+    if (token) setClientCookie(token);
+    set({ user: userData as AuthUser });
   },
 
   logout: async () => {
     await api.post("/api/auth/logout");
+    document.cookie = "kiri_token=; path=/; max-age=0";
     set({ user: null });
   },
 }));

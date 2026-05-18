@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Raleway, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -20,14 +20,19 @@ export const metadata: Metadata = {
     "A centralized platform for landlords to manage properties and automate tenant communication.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body>
+    <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <AuthProvider>
           <ActivityTracker />
           {children}

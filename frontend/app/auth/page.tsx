@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, KeyRound, House } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { toast } from "sonner";
@@ -17,6 +17,9 @@ export default function AuthPage() {
   const [selectedRole, setSelectedRole] = useState<Role>("Landlord");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
@@ -34,8 +37,14 @@ export default function AuthPage() {
     try {
       await login(loginForm.email, loginForm.password);
       window.location.href = "/properties";
-    } catch {
-      setFieldErrors({ password: "Invalid email or password." });
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
+        setFieldErrors({ password: "Invalid email or password." });
+      } else {
+        toast.error(`Login failed (${status ?? "network error"}). Check console.`);
+        console.error("Login error:", err);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -74,6 +83,10 @@ export default function AuthPage() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-[#FAF7F2]" />;
   }
 
   return (
@@ -117,6 +130,7 @@ export default function AuthPage() {
                 value={loginForm.email}
                 onChange={(e) => setLoginForm((f) => ({ ...f, email: e.target.value }))}
                 required
+
                 className="w-full px-5 py-3 rounded-full border border-[#E8E0D5] bg-white text-sm text-[#1E1208] placeholder:text-[#B8B0A8] focus:outline-none focus:ring-2 focus:ring-[#3A5230]/20"
               />
             </div>
@@ -130,6 +144,7 @@ export default function AuthPage() {
                   value={loginForm.password}
                   onChange={(e) => setLoginForm((f) => ({ ...f, password: e.target.value }))}
                   required
+
                   className="w-full px-5 py-3 pr-12 rounded-full border border-[#E8E0D5] bg-white text-sm text-[#1E1208] placeholder:text-[#B8B0A8] focus:outline-none focus:ring-2 focus:ring-[#3A5230]/20"
                 />
                 <button
@@ -192,6 +207,7 @@ export default function AuthPage() {
                   value={registerForm.firstName}
                   onChange={(e) => setRegisterForm((f) => ({ ...f, firstName: e.target.value }))}
                   required
+
                   className="w-full px-5 py-3 rounded-full border border-[#E8E0D5] bg-white text-sm text-[#1E1208] placeholder:text-[#B8B0A8] focus:outline-none focus:ring-2 focus:ring-[#3A5230]/20"
                 />
               </div>
@@ -203,6 +219,7 @@ export default function AuthPage() {
                   value={registerForm.lastName}
                   onChange={(e) => setRegisterForm((f) => ({ ...f, lastName: e.target.value }))}
                   required
+
                   className="w-full px-5 py-3 rounded-full border border-[#E8E0D5] bg-white text-sm text-[#1E1208] placeholder:text-[#B8B0A8] focus:outline-none focus:ring-2 focus:ring-[#3A5230]/20"
                 />
               </div>
@@ -216,6 +233,7 @@ export default function AuthPage() {
                 value={registerForm.email}
                 onChange={(e) => setRegisterForm((f) => ({ ...f, email: e.target.value }))}
                 required
+
                 className="w-full px-5 py-3 rounded-full border border-[#E8E0D5] bg-white text-sm text-[#1E1208] placeholder:text-[#B8B0A8] focus:outline-none focus:ring-2 focus:ring-[#3A5230]/20"
               />
             </div>
@@ -229,6 +247,7 @@ export default function AuthPage() {
                   value={registerForm.password}
                   onChange={(e) => setRegisterForm((f) => ({ ...f, password: e.target.value }))}
                   required
+
                   className="w-full px-5 py-3 pr-12 rounded-full border border-[#E8E0D5] bg-white text-sm text-[#1E1208] placeholder:text-[#B8B0A8] focus:outline-none focus:ring-2 focus:ring-[#3A5230]/20"
                 />
                 <button
@@ -257,6 +276,7 @@ export default function AuthPage() {
                   value={registerForm.confirmPassword}
                   onChange={(e) => setRegisterForm((f) => ({ ...f, confirmPassword: e.target.value }))}
                   required
+
                   className="w-full px-5 py-3 pr-12 rounded-full border border-[#E8E0D5] bg-white text-sm text-[#1E1208] placeholder:text-[#B8B0A8] focus:outline-none focus:ring-2 focus:ring-[#3A5230]/20"
                 />
                 <button

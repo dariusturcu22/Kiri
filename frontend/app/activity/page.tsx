@@ -24,7 +24,7 @@ export default function ActivityPage() {
   return (
     <div className="flex min-h-screen bg-cream-bg font-sans">
       <Sidebar />
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
         <div className="max-w-4xl mx-auto">
           <header className="flex justify-between items-center mb-8">
             <div>

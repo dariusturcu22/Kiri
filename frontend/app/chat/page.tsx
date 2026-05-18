@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import ChatWindow from "@/components/ChatWindow";
 import { useChatStore } from "@/store/chat";
@@ -12,6 +13,9 @@ export default function ChatPage() {
   const { users, selectedUserId, fetchUsers, selectUser, onMessageReceived, setConnected } =
     useChatStore();
   const currentUser = useAuthStore((s) => s.user);
+
+  // On mobile, track whether the chat window is open
+  const [mobileShowChat, setMobileShowChat] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -37,17 +41,36 @@ export default function ChatPage() {
 
   const selectedUser = users.find((u) => u.id === selectedUserId);
 
+  function handleSelectUser(id: number) {
+    selectUser(id);
+    setMobileShowChat(true);
+  }
+
   return (
     <div className="flex min-h-screen bg-[#FAF7F2] font-sans">
       <Sidebar />
 
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-[#EDE8DF] px-8 h-16 flex items-center shrink-0">
-          <h1 className="text-2xl font-extrabold text-[#1E1208]">Chat</h1>
+      <main className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+        <header className="bg-white border-b border-[#EDE8DF] px-4 md:px-8 h-14 md:h-16 flex items-center gap-3 shrink-0">
+          {/* Back button on mobile when chat is open */}
+          {mobileShowChat && (
+            <button
+              className="md:hidden mr-1 text-[#6B7E94] hover:text-[#1E1208] transition-colors"
+              onClick={() => setMobileShowChat(false)}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <h1 className="text-xl md:text-2xl font-extrabold text-[#1E1208]">
+            {mobileShowChat && selectedUser
+              ? `${selectedUser.firstName} ${selectedUser.lastName}`
+              : "Chat"}
+          </h1>
         </header>
 
         <div className="flex flex-1 overflow-hidden">
-          <aside className="w-72 border-r border-[#EDE8DF] bg-white flex flex-col">
+          {/* Conversation list — visible on desktop always, on mobile only when chat is NOT open */}
+          <aside className={`${mobileShowChat ? "hidden" : "flex"} md:flex w-full md:w-72 border-r border-[#EDE8DF] bg-white flex-col`}>
             <div className="px-5 py-4 border-b border-[#EDE8DF]">
               <p className="text-xs font-bold text-[#6B7E94] uppercase tracking-widest">
                 Conversations
@@ -65,7 +88,7 @@ export default function ChatPage() {
                   return (
                     <button
                       key={user.id}
-                      onClick={() => selectUser(user.id)}
+                      onClick={() => handleSelectUser(user.id)}
                       className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors border-b border-[#EDE8DF] ${
                         isSelected
                           ? "bg-[#3A5230]/8 border-l-2 border-l-[#3A5230]"
@@ -88,14 +111,15 @@ export default function ChatPage() {
             </div>
           </aside>
 
-          <div className="flex-1">
+          {/* Chat window — visible on desktop always, on mobile only when chat IS open */}
+          <div className={`${mobileShowChat ? "flex" : "hidden"} md:flex flex-1`}>
             {selectedUser && currentUser ? (
               <ChatWindow
                 currentUser={currentUser}
                 selectedUser={selectedUser}
               />
             ) : (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex items-center justify-center h-full w-full">
                 <div className="text-center">
                   <p className="text-[#6B7E94] text-sm font-medium">
                     Select a conversation to start chatting

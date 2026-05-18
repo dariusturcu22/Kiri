@@ -169,15 +169,15 @@ function PropertyForm({
     <div className="flex min-h-screen bg-cream-bg font-sans">
       <Sidebar />
 
-      <main className="flex-1">
-        <header className="h-16 border-b border-cream-warm flex items-center px-9">
-          <h2 className="text-2xl font-extrabold text-brown-dark">
+      <main className="flex-1 pb-16 md:pb-0">
+        <header className="h-14 md:h-16 border-b border-cream-warm flex items-center px-4 md:px-9">
+          <h2 className="text-xl md:text-2xl font-extrabold text-brown-dark">
             {pageTitle}
           </h2>
         </header>
 
-        <div className="p-8 flex gap-6">
-          <div className="flex-1 max-w-xl space-y-5">
+        <div className="p-4 md:p-8 flex flex-col md:flex-row gap-6">
+          <div className="flex-1 md:max-w-xl space-y-5">
             <section className="bg-white rounded-3xl p-7 border border-cream-warm shadow-sm">
               <SectionTitle label="Location" />
               <div className="space-y-4">
@@ -351,7 +351,7 @@ function PropertyForm({
             </div>
           </div>
 
-          <aside className="w-80 space-y-5">
+          <aside className="hidden md:block w-80 space-y-5">
             <PropertySummary values={values} />
             <ThingsToKnow />
           </aside>

@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentAssertions;
 using Kiri.Api.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -9,6 +11,13 @@ namespace Kiri.Api.Tests;
 public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client;
+
+    // Match the API's JsonStringEnumConverter so enum round-trips work in tests.
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() },
+    };
 
     public PropertiesEndpointsTests(WebApplicationFactory<Program> factory)
     {
@@ -30,7 +39,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
 
     private async Task<Property> CreateSamplePropertyAsync() =>
         (await (await _client.PostAsJsonAsync("/api/properties", SamplePropertyFormData()))
-            .Content.ReadFromJsonAsync<Property>())!;
+            .Content.ReadFromJsonAsync<Property>(JsonOpts))!;
 
     [Fact]
     public async Task GetAll_WithDefaultPagination_ReturnsOk()
@@ -38,7 +47,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         var response = await _client.GetAsync("/api/properties");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>();
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>(JsonOpts);
         result.Should().NotBeNull();
         result!.Page.Should().Be(1);
     }
@@ -51,7 +60,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         var response = await _client.GetAsync("/api/properties?page=1&pageSize=1");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>();
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>(JsonOpts);
         result!.Items.Should().HaveCount(1);
     }
 
@@ -65,7 +74,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         var response = await _client.GetAsync("/api/properties?status=Vacant");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>();
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<Property>>(JsonOpts);
         result!.Items.Should().OnlyContain(p => p.Status == PropertyStatus.Vacant);
     }
 
@@ -77,7 +86,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         var response = await _client.GetAsync($"/api/properties/{created.Id}");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var property = await response.Content.ReadFromJsonAsync<Property>();
+        var property = await response.Content.ReadFromJsonAsync<Property>(JsonOpts);
         property!.Id.Should().Be(created.Id);
     }
 
@@ -94,7 +103,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         var response = await _client.PostAsJsonAsync("/api/properties", SamplePropertyFormData());
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var created = await response.Content.ReadFromJsonAsync<Property>();
+        var created = await response.Content.ReadFromJsonAsync<Property>(JsonOpts);
         created.Should().NotBeNull();
         created!.Id.Should().BePositive();
         created.Name.Should().Be("Test Property");
@@ -120,7 +129,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         var response = await _client.PutAsJsonAsync($"/api/properties/{created.Id}", updatedData);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var updated = await response.Content.ReadFromJsonAsync<Property>();
+        var updated = await response.Content.ReadFromJsonAsync<Property>(JsonOpts);
         updated!.Rent.Should().Be(999);
         updated.Status.Should().Be(PropertyStatus.Occupied);
     }
@@ -156,7 +165,7 @@ public sealed class PropertiesEndpointsTests : IClassFixture<WebApplicationFacto
         var response = await _client.GetAsync("/api/properties/statistics");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var stats = await response.Content.ReadFromJsonAsync<PropertyStatistics>();
+        var stats = await response.Content.ReadFromJsonAsync<PropertyStatistics>(JsonOpts);
         stats.Should().NotBeNull();
         stats!.TotalProperties.Should().BePositive();
         stats.TotalMonthlyRent.Should().BePositive();

@@ -73,13 +73,15 @@ export default function PropertiesPage() {
     <div className="flex min-h-screen bg-cream-bg font-sans">
       <Sidebar />
 
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-cream-warm px-8 h-16 flex items-center justify-between gap-6 shrink-0">
-          <h1 className="text-2xl font-extrabold text-brown-dark shrink-0">
+      <main className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+        {/* ── Header ── */}
+        <header className="bg-white border-b border-cream-warm px-4 md:px-8 h-14 md:h-16 flex items-center justify-between gap-3 shrink-0">
+          <h1 className="text-xl md:text-2xl font-extrabold text-brown-dark shrink-0">
             Properties
           </h1>
 
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Stats toggle — desktop only */}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
             <button
               onClick={() => setShowStats((s) => !s)}
               className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${
@@ -99,8 +101,9 @@ export default function PropertiesPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 ml-auto">
-            <div className="relative">
+          <div className="flex items-center gap-2 md:gap-3 ml-auto">
+            {/* Search — hidden on mobile, shown on md+ */}
+            <div className="relative hidden md:block">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate" />
               <input
                 type="text"
@@ -118,22 +121,37 @@ export default function PropertiesPage() {
 
             <button
               onClick={() => router.push("/properties/new")}
-              className="flex items-center gap-2 px-5 py-2 bg-green-dark hover:bg-green-hover text-white text-sm font-bold rounded-full transition-colors shrink-0"
+              className="flex items-center gap-2 px-4 md:px-5 py-2 bg-green-dark hover:bg-green-hover text-white text-sm font-bold rounded-full transition-colors shrink-0"
             >
               <Plus className="w-4 h-4" />
-              Add Property
+              <span className="hidden sm:inline">Add Property</span>
             </button>
           </div>
         </header>
 
-        <div className="p-8">
+        {/* Mobile search bar */}
+        <div className="md:hidden px-4 pt-3 pb-1">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search properties..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-full border border-cream-warm bg-white text-sm text-brown-dark placeholder:text-brown-muted focus:outline-none focus:ring-2 focus:ring-brown-mid/20"
+            />
+          </div>
+        </div>
+
+        <div className="p-4 md:p-8">
           {showStats && (
             <div className="mb-8">
               <StatisticsPanel />
             </div>
           )}
 
-          <div className="bg-white rounded-3xl overflow-hidden shadow-sm">
+          {/* ── Desktop table ── */}
+          <div className="hidden md:block bg-white rounded-3xl overflow-hidden shadow-sm">
             <div className={`${COL_GRID} bg-cream-warm py-3`}>
               {[
                 "Property",
@@ -171,7 +189,6 @@ export default function PropertiesPage() {
                     index % 2 === 0 ? "bg-white" : "bg-cream-bg"
                   }`}
                 >
-                  {/* Property */}
                   <div className="flex items-center gap-3 min-w-0">
                     <img
                       src={property.image || "/logo.png"}
@@ -182,23 +199,15 @@ export default function PropertiesPage() {
                       {property.name}
                     </span>
                   </div>
-
-                  {/* Address */}
                   <span className="text-sm text-slate truncate">
                     {property.address}
                   </span>
-
-                  {/* City */}
                   <span className="text-sm text-slate truncate">
                     {property.city}
                   </span>
-
-                  {/* Rent */}
                   <span className="text-sm font-bold text-brown-dark">
                     €{property.rent}
                   </span>
-
-                  {/* Status */}
                   <span
                     className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold w-fit ${
                       property.status === "Occupied"
@@ -208,8 +217,6 @@ export default function PropertiesPage() {
                   >
                     {property.status}
                   </span>
-
-                  {/* Tenants */}
                   <div className="flex items-center">
                     {property.tenants?.slice(0, 4).map((tenant, i) => (
                       <div
@@ -220,8 +227,6 @@ export default function PropertiesPage() {
                       </div>
                     ))}
                   </div>
-
-                  {/* Actions */}
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => router.push(`/properties/${property.id}`)}
@@ -272,13 +277,108 @@ export default function PropertiesPage() {
             )}
           </div>
 
+          {/* ── Mobile card list ── */}
+          <div className="md:hidden flex flex-col gap-3">
+            {isLoading ? (
+              <div className="py-16 text-center text-slate text-sm">
+                Loading properties...
+              </div>
+            ) : visibleProperties.length === 0 ? (
+              <div className="py-16 text-center text-slate text-sm">
+                {search
+                  ? "No properties match your search."
+                  : "No properties yet. Tap + to add one."}
+              </div>
+            ) : (
+              visibleProperties.map((property) => (
+                <div
+                  key={property.id}
+                  className="bg-white rounded-2xl border border-cream-warm shadow-sm overflow-hidden"
+                >
+                  <div
+                    className="flex items-center gap-3 p-4 cursor-pointer active:bg-cream-bg"
+                    onClick={() => router.push(`/properties/${property.id}`)}
+                  >
+                    <img
+                      src={property.image || "/logo.png"}
+                      alt={property.name}
+                      className="w-14 h-14 rounded-xl object-cover shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-brown-dark truncate">
+                        {property.name}
+                      </p>
+                      <p className="text-xs text-slate truncate mt-0.5">
+                        {property.address}, {property.city}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            property.status === "Occupied"
+                              ? "bg-card-sage text-green-dark"
+                              : "bg-rose-100 text-rose-700"
+                          }`}
+                        >
+                          {property.status}
+                        </span>
+                        <span className="text-xs font-bold text-brown-dark">
+                          €{property.rent}/mo
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t border-cream-bg flex">
+                    <button
+                      onClick={() => router.push(`/properties/${property.id}`)}
+                      className="flex-1 py-2.5 text-xs font-semibold text-slate hover:bg-cream-bg transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> View
+                    </button>
+                    <div className="w-px bg-cream-bg" />
+                    <button
+                      onClick={() => router.push(`/properties/${property.id}/edit`)}
+                      className="flex-1 py-2.5 text-xs font-semibold text-slate hover:bg-cream-bg transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Pencil className="w-3.5 h-3.5" /> Edit
+                    </button>
+                    <div className="w-px bg-cream-bg" />
+                    <AlertDialog>
+                      <AlertDialogTrigger className="flex-1 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center gap-1">
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete property?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete{" "}
+                            <strong>{property.name}</strong> —{" "}
+                            {property.address}. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(property)}
+                            className="bg-rose-600 hover:bg-rose-700 text-white"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
           {/* Pagination */}
           <div className="flex items-center justify-between mt-4 px-1">
             <p className="text-sm text-slate">
               Showing{" "}
               {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–
               {Math.min(currentPage * PAGE_SIZE, filtered.length)} of{" "}
-              {filtered.length} properties
+              {filtered.length}
             </p>
 
             <div className="flex items-center gap-1.5">
