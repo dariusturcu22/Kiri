@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Kiri.Api.Data;
+using Kiri.Api.Endpoints;
 using Kiri.Api.Models;
 
 namespace Kiri.Api.Middleware;
@@ -29,26 +30,24 @@ public sealed class ActionLoggingMiddleware(RequestDelegate next)
             return;
         }
 
-        var userId = context.Session.GetInt32(SessionKeys.UserId);
-        var userRole = context.Session.GetString(SessionKeys.UserRole) ?? "Anonymous";
+        var userId = AuthEndpoints.GetUserId(context);
+        var userRole = AuthEndpoints.GetUserRole(context) ?? "Anonymous";
         var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
         await next(context);
 
-        if (userId is null)
-            return;
+        if (userId == 0) return;
 
         var routeKey = $"{method} {NormalizePath(path)}";
         RouteToActionType.TryGetValue(routeKey, out var actionType);
         actionType ??= $"{method} {path}";
 
         var success = context.Response.StatusCode is >= 200 and < 400;
-
         var details = JsonSerializer.Serialize(new { path, method, statusCode = context.Response.StatusCode });
 
         db.ActionLogs.Add(new ActionLog
         {
-            UserId = userId.Value,
+            UserId = userId,
             UserRole = userRole,
             ActionType = actionType,
             ActionDetails = details,

@@ -18,8 +18,7 @@ public static class AdminEndpoints
     private static async Task<IResult> GetLogs(KiriDbContext db, HttpContext context,
         int page = 1, int pageSize = 50)
     {
-        if (!IsAdmin(context))
-            return Results.Forbid();
+        if (!IsAdmin(context)) return Results.Forbid();
 
         var logs = await db.ActionLogs
             .OrderByDescending(a => a.Timestamp)
@@ -27,39 +26,25 @@ public static class AdminEndpoints
             .Take(pageSize)
             .Select(a => new
             {
-                a.Id,
-                a.UserId,
-                a.UserRole,
-                a.ActionType,
-                a.ActionDetails,
-                a.Timestamp,
-                a.IpAddress,
-                a.Success
+                a.Id, a.UserId, a.UserRole, a.ActionType,
+                a.ActionDetails, a.Timestamp, a.IpAddress, a.Success
             })
             .ToListAsync();
 
         var total = await db.ActionLogs.CountAsync();
-
         return Results.Ok(new { logs, total, page, pageSize });
     }
 
     private static async Task<IResult> GetSuspiciousUsers(KiriDbContext db, HttpContext context)
     {
-        if (!IsAdmin(context))
-            return Results.Forbid();
+        if (!IsAdmin(context)) return Results.Forbid();
 
         var users = await db.SuspiciousUsers
             .OrderByDescending(s => s.DetectedAt)
             .Select(s => new
             {
-                s.Id,
-                s.UserId,
-                s.UserEmail,
-                s.UserRole,
-                s.DetectionReason,
-                s.DetectedAt,
-                s.IsResolved,
-                s.ResolvedAt
+                s.Id, s.UserId, s.UserEmail, s.UserRole,
+                s.DetectionReason, s.DetectedAt, s.IsResolved, s.ResolvedAt
             })
             .ToListAsync();
 
@@ -68,12 +53,10 @@ public static class AdminEndpoints
 
     private static async Task<IResult> ResolveUser(int id, KiriDbContext db, HttpContext context)
     {
-        if (!IsAdmin(context))
-            return Results.Forbid();
+        if (!IsAdmin(context)) return Results.Forbid();
 
         var entry = await db.SuspiciousUsers.FindAsync(id);
-        if (entry is null)
-            return Results.NotFound();
+        if (entry is null) return Results.NotFound();
 
         entry.IsResolved = true;
         entry.ResolvedAt = DateTime.UtcNow;
@@ -83,5 +66,5 @@ public static class AdminEndpoints
     }
 
     private static bool IsAdmin(HttpContext context) =>
-        context.Session.GetString(SessionKeys.UserRole) == RoleNames.Admin;
+        AuthEndpoints.GetUserRole(context) == RoleNames.Admin;
 }
