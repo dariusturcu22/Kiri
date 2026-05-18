@@ -7,6 +7,7 @@ using Kiri.Api.Middleware;
 using Kiri.Api.Services;
 using Kiri.Api.Storage;
 using Kiri.Api.Validators;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using System.Text.Json.Serialization;
@@ -31,6 +32,7 @@ builder.Services.AddSingleton<IMongoClient>(_ =>
 builder.Services.AddSingleton<IChatStorage, MongoChatStorage>();
 builder.Services.AddSignalR();
 builder.Services.AddValidatorsFromAssemblyContaining<PropertyFormDataValidator>();
+builder.Services.AddSingleton<JwtService>();
 builder.Services.AddHostedService<BehaviourDetectionService>();
 
 builder.Services.AddCors(options =>
@@ -49,14 +51,21 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.Name = "kiri_session";
-    options.IdleTimeout = TimeSpan.FromHours(2);
-});
+var jwtService = new JwtService(builder.Configuration);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = jwtService.GetValidationParameters();
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                ctx.Token = ctx.Request.Cookies["kiri_token"];
+                return Task.CompletedTask;
+            }
+        };
+    });
+builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<KiriDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -77,7 +86,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
-app.UseSession();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseMiddleware<ActionLoggingMiddleware>();
 app.MapPropertiesEndpoints();
 app.MapAuthEndpoints();
