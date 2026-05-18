@@ -1,5 +1,8 @@
 # root .gitignore
 
+# TLS certificates (contain private keys)
+backend/Kiri.Api/certs/
+
 # Node
 node_modules/
 
