@@ -55,6 +55,7 @@ var jwtService = new JwtService(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = jwtService.GetValidationParameters();
         options.Events = new JwtBearerEvents
         {
@@ -75,8 +76,15 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<KiriDbContext>();
-    await db.Database.MigrateAsync();
-    await DbSeeder.SeedAsync(db);
+    if (db.Database.IsRelational())
+    {
+        await db.Database.MigrateAsync();
+        await DbSeeder.SeedAsync(db);
+    }
+    else
+    {
+        await db.Database.EnsureCreatedAsync();
+    }
 }
 
 if (app.Environment.IsDevelopment())
