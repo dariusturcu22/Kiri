@@ -43,7 +43,9 @@ builder.Services.AddCors(options =>
             .SetIsOriginAllowed(origin =>
             {
                 var host = new Uri(origin).Host;
-                return host == "localhost" || host == "192.168.8.114";
+                return host == "localhost" ||
+                       host.Equals("desktop-l6p46o3.local", StringComparison.OrdinalIgnoreCase) ||
+                       host.Equals("desktop-l6p46o3", StringComparison.OrdinalIgnoreCase);
             })
             .AllowAnyMethod()
             .AllowAnyHeader()
