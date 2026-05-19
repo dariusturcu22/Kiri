@@ -302,12 +302,7 @@ public static class AuthEndpoints
 
     private static IResult GoogleLogin(HttpContext context, IConfiguration config)
     {
-        // Derive the frontend URL from the incoming request host so that mobile
-        // clients on the LAN get redirected back to their actual IP, not localhost.
-        var host = context.Request.Host.Host;
-        var scheme = context.Request.IsHttps ? "https" : "http";
-        var frontendUrl = $"{scheme}://{host}:3000";
-
+        var frontendUrl = config["FrontendUrl"] ?? "https://localhost:3000";
         var props = new AuthenticationProperties
         {
             RedirectUri = "/api/auth/google/complete",
@@ -323,10 +318,11 @@ public static class AuthEndpoints
         JwtService jwt, IConfiguration config)
     {
         var result = await context.AuthenticateAsync("ExternalAuth");
+        if (!result.Succeeded)
+            return Results.Redirect($"{config["FrontendUrl"] ?? "https://localhost:3000"}/auth?error=google_failed");
+
         var frontendUrl = result.Properties?.Items.TryGetValue("frontendUrl", out var fu) == true
             ? fu : config["FrontendUrl"] ?? "https://localhost:3000";
-        if (!result.Succeeded)
-            return Results.Redirect($"{frontendUrl}/auth?error=google_failed");
 
         var email      = result.Principal!.FindFirstValue(ClaimTypes.Email) ?? "";
         var name       = result.Principal!.FindFirstValue(ClaimTypes.Name) ?? "";
