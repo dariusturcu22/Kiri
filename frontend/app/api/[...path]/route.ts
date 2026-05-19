@@ -26,7 +26,15 @@ async function proxy(req: NextRequest, context: Context) {
     method: req.method,
     headers: forwardHeaders,
     body,
+    redirect: "manual", // pass 3xx redirects through to the browser
   });
+
+  // For redirects (OAuth flows etc.), forward the Location header directly
+  // so the browser follows the redirect rather than the proxy swallowing it.
+  if (upstream.status >= 300 && upstream.status < 400) {
+    const location = upstream.headers.get("location");
+    return NextResponse.redirect(location ?? "/", { status: upstream.status });
+  }
 
   const responseBody = upstream.status === 204 ? null : await upstream.arrayBuffer();
 
