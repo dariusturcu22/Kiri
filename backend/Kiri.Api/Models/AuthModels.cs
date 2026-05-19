@@ -10,7 +10,7 @@ public record RegisterRequest(
     string LastName,
     string Role);
 
-public record UserResponse(int Id, string Email, string FirstName, string LastName, string Role);
+public record UserResponse(int Id, string Email, string FirstName, string LastName, string Role, bool Is2FAEnabled = false);
 
 public record ForgotPasswordRequest(string Email);
 

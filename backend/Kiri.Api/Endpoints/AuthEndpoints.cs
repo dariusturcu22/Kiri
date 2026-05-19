@@ -121,17 +121,20 @@ public static class AuthEndpoints
 
     // ── Me ────────────────────────────────────────────────────────────────────
 
-    private static IResult Me(HttpContext context)
+    private static async Task<IResult> Me(HttpContext context, KiriDbContext db)
     {
         var userId = GetUserId(context);
         if (userId == 0) return Results.Unauthorized();
+
+        var user = await db.Users.FindAsync(userId);
 
         var response = new UserResponse(
             Id: userId,
             Email: GetClaim(context, JwtClaimKeys.Email)!,
             FirstName: GetClaim(context, JwtClaimKeys.FirstName)!,
             LastName: GetClaim(context, JwtClaimKeys.LastName)!,
-            Role: GetUserRole(context)!
+            Role: GetUserRole(context)!,
+            Is2FAEnabled: user?.Is2FAEnabled ?? false
         );
 
         return Results.Ok(response);

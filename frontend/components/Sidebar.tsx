@@ -13,6 +13,7 @@ import {
   Calendar,
   FileText,
   Zap,
+  Settings,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 
@@ -70,6 +71,7 @@ export default function Sidebar() {
     ...(user?.role === "Admin"
       ? [{ label: "Admin Panel", icon: ShieldAlert, href: "/admin" }]
       : []),
+    { label: "Settings", icon: Settings, href: "/settings" },
   ];
 
   const mobileNavItems = [
