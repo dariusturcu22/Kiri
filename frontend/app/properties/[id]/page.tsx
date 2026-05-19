@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { trackEvent } from "@/lib/activity";
+import { useAuthStore } from "@/store/auth";
 
 const METER_READINGS = [
   { id: "1", type: "Electricity", iconBg: "bg-card-tan", status: "Remind" },
@@ -140,13 +141,8 @@ const buildQuickActions = (onOpenChat: () => void) => [
 export default function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
-
-  const sidebarLinks = [
-    { label: "Maintenance", icon: Zap, onClick: () => {} },
-    { label: "Scheduling", icon: Calendar, onClick: () => {} },
-    { label: "Contract", icon: FileText, onClick: () => {} },
-    { label: "Chat", icon: MessageSquare, onClick: () => router.push("/chat") },
-  ];
+  const user = useAuthStore((s) => s.user);
+  const canEdit = user?.role === "Landlord" || user?.role === "Admin";
 
   const quickActions = buildQuickActions(() => router.push("/chat"));
   const { getPropertyById, deleteProperty } = usePropertyStore();
@@ -210,7 +206,7 @@ export default function PropertyDetailPage() {
 
   return (
     <div className="flex min-h-screen bg-white font-sans">
-      <Sidebar items={sidebarLinks} />
+      <Sidebar />
 
       <main className="flex-1 bg-cream-bg overflow-auto pb-16 md:pb-0">
         <div className="relative h-55 w-full overflow-hidden">
@@ -254,6 +250,7 @@ export default function PropertyDetailPage() {
               </div>
             </div>
 
+            {canEdit && (
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={() => router.push(`/properties/${propertyId}/edit`)}
@@ -286,6 +283,7 @@ export default function PropertyDetailPage() {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
+            )}
           </div>
         </div>
 
@@ -537,12 +535,12 @@ export default function PropertyDetailPage() {
                   <h3 className="font-bold text-brown-dark text-[15px]">
                     Property Details
                   </h3>
-                  <Edit
-                    className="w-4 h-4 text-slate cursor-pointer hover:text-brown-dark transition-colors"
-                    onClick={() =>
-                      router.push(`/properties/${propertyId}/edit`)
-                    }
-                  />
+                  {canEdit && (
+                    <Edit
+                      className="w-4 h-4 text-slate cursor-pointer hover:text-brown-dark transition-colors"
+                      onClick={() => router.push(`/properties/${propertyId}/edit`)}
+                    />
+                  )}
                 </div>
                 <div className="flex flex-col gap-2.5">
                   {detailFields.map(({ label, value }) => (

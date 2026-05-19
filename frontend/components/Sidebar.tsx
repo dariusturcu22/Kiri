@@ -10,31 +10,11 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-} from "lucide-react";
-import { useAuthStore } from "@/store/auth";
-
-type SidebarItem = {
-  label: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  onClick?: () => void;
-};
-
-type SidebarProps = {
-  items?: SidebarItem[];
-};
-
-const mainNavItems = [
-  { label: "Properties", icon: Home, href: "/properties" },
-  { label: "Maintenance", icon: Wrench, href: "/maintenance" },
-  { label: "Chat", icon: MessageSquare, href: "/chat" },
-];
-
-// Full nav for desktop sidebar
-import {
   Calendar,
   FileText,
   Zap,
 } from "lucide-react";
+import { useAuthStore } from "@/store/auth";
 
 const allDesktopNavItems = [
   { label: "Properties", icon: Home, href: "/properties" },
@@ -45,10 +25,16 @@ const allDesktopNavItems = [
   { label: "Chat", icon: MessageSquare, href: "/chat" },
 ];
 
+const mainMobileNavItems = [
+  { label: "Properties", icon: Home, href: "/properties" },
+  { label: "Maintenance", icon: Wrench, href: "/maintenance" },
+  { label: "Chat", icon: MessageSquare, href: "/chat" },
+];
+
 const collapsedWidth = "w-[68px]";
 const expandedWidth = "w-64";
 
-export default function Sidebar({ items = [] }: SidebarProps) {
+export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
@@ -70,8 +56,6 @@ export default function Sidebar({ items = [] }: SidebarProps) {
     });
   }
 
-  const hasPropertySection = items.length > 0;
-
   const initials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : "?";
@@ -89,7 +73,7 @@ export default function Sidebar({ items = [] }: SidebarProps) {
   ];
 
   const mobileNavItems = [
-    ...mainNavItems,
+    ...mainMobileNavItems,
     ...(user?.role === "Admin"
       ? [{ label: "Admin", icon: ShieldAlert, href: "/admin" }]
       : []),
@@ -143,31 +127,6 @@ export default function Sidebar({ items = [] }: SidebarProps) {
             );
           })}
         </nav>
-
-        {hasPropertySection && (!mounted || !collapsed) && (
-          <>
-            <div className="h-px bg-white/10 my-4 mx-3" />
-            <button className="mx-3 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#FAF7F2] bg-white/10 mb-3">
-              <Home className="w-4 h-4" />
-              <span>This Property</span>
-            </button>
-            <div className="flex flex-1 px-3">
-              <div className="w-px bg-white/15 mr-4 ml-2" />
-              <nav className="flex flex-col gap-4">
-                {items.map(({ label, icon: Icon, onClick }) => (
-                  <button
-                    key={label}
-                    onClick={onClick}
-                    className="flex items-center gap-3 text-sm text-[#8C7B6E] hover:text-[#FAF7F2] transition-colors"
-                  >
-                    {Icon && <Icon className="w-4 h-4" />}
-                    {label}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </>
-        )}
 
         <div className={`mt-auto border-t border-white/10 pt-4 flex items-center ${mounted && collapsed ? "flex-col gap-3 px-2" : "gap-3 px-4"}`}>
           <div className="w-8 h-8 rounded-full bg-[#3A5230] flex items-center justify-center shrink-0">

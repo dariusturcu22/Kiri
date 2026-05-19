@@ -20,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { trackEvent } from "@/lib/activity";
+import { useAuthStore } from "@/store/auth";
 
 const PAGE_SIZE = 5;
 
@@ -28,6 +29,8 @@ const COL_GRID =
 
 export default function PropertiesPage() {
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const canEdit = user?.role === "Landlord" || user?.role === "Admin";
   const { properties, isLoading, fetchProperties, deleteProperty } =
     usePropertyStore();
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,13 +122,15 @@ export default function PropertiesPage() {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500" />
             </button>
 
-            <button
-              onClick={() => router.push("/properties/new")}
-              className="flex items-center gap-2 px-4 md:px-5 py-2 bg-green-dark hover:bg-green-hover text-white text-sm font-bold rounded-full transition-colors shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Property</span>
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => router.push("/properties/new")}
+                className="flex items-center gap-2 px-4 md:px-5 py-2 bg-green-dark hover:bg-green-hover text-white text-sm font-bold rounded-full transition-colors shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Add Property</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -235,42 +240,44 @@ export default function PropertiesPage() {
                     >
                       <Eye className="w-3.5 h-3.5 text-slate" />
                     </button>
-                    <button
-                      onClick={() =>
-                        router.push(`/properties/${property.id}/edit`)
-                      }
-                      title="Edit"
-                      className="w-7 h-7 rounded-full bg-cream-bg border border-cream-warm flex items-center justify-center hover:bg-cream-warm transition-colors"
-                    >
-                      <Pencil className="w-3.5 h-3.5 text-slate" />
-                    </button>
-                    <AlertDialog>
-                      <AlertDialogTrigger
-                        title="Delete"
-                        className="w-7 h-7 rounded-full bg-cream-bg border border-cream-warm flex items-center justify-center hover:bg-rose-100 hover:border-rose-200 transition-colors"
+                    {canEdit && (
+                      <button
+                        onClick={() => router.push(`/properties/${property.id}/edit`)}
+                        title="Edit"
+                        className="w-7 h-7 rounded-full bg-cream-bg border border-cream-warm flex items-center justify-center hover:bg-cream-warm transition-colors"
                       >
-                        <Trash2 className="w-3.5 h-3.5 text-slate" />
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete property?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete{" "}
-                            <strong>{property.name}</strong> —{" "}
-                            {property.address}. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(property)}
-                            className="bg-rose-600 hover:bg-rose-700 text-white"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                        <Pencil className="w-3.5 h-3.5 text-slate" />
+                      </button>
+                    )}
+                    {canEdit && (
+                      <AlertDialog>
+                        <AlertDialogTrigger
+                          title="Delete"
+                          className="w-7 h-7 rounded-full bg-cream-bg border border-cream-warm flex items-center justify-center hover:bg-rose-100 hover:border-rose-200 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-slate" />
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete property?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete{" "}
+                              <strong>{property.name}</strong> —{" "}
+                              {property.address}. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(property)}
+                              className="bg-rose-600 hover:bg-rose-700 text-white"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </div>
               ))
@@ -334,38 +341,42 @@ export default function PropertiesPage() {
                     >
                       <Eye className="w-3.5 h-3.5" /> View
                     </button>
-                    <div className="w-px bg-cream-bg" />
-                    <button
-                      onClick={() => router.push(`/properties/${property.id}/edit`)}
-                      className="flex-1 py-2.5 text-xs font-semibold text-slate hover:bg-cream-bg transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Pencil className="w-3.5 h-3.5" /> Edit
-                    </button>
-                    <div className="w-px bg-cream-bg" />
-                    <AlertDialog>
-                      <AlertDialogTrigger className="flex-1 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center gap-1">
-                        <Trash2 className="w-3.5 h-3.5" /> Delete
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete property?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete{" "}
-                            <strong>{property.name}</strong> —{" "}
-                            {property.address}. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(property)}
-                            className="bg-rose-600 hover:bg-rose-700 text-white"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    {canEdit && (
+                      <>
+                        <div className="w-px bg-cream-bg" />
+                        <button
+                          onClick={() => router.push(`/properties/${property.id}/edit`)}
+                          className="flex-1 py-2.5 text-xs font-semibold text-slate hover:bg-cream-bg transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Edit
+                        </button>
+                        <div className="w-px bg-cream-bg" />
+                        <AlertDialog>
+                          <AlertDialogTrigger className="flex-1 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center gap-1">
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete property?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete{" "}
+                                <strong>{property.name}</strong> —{" "}
+                                {property.address}. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(property)}
+                                className="bg-rose-600 hover:bg-rose-700 text-white"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
                   </div>
                 </div>
               ))
