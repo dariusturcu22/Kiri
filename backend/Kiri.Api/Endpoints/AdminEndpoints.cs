@@ -8,7 +8,9 @@ public static class AdminEndpoints
 {
     public static void MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/admin").WithTags("Admin");
+        var group = app.MapGroup("/api/admin")
+            .WithTags("Admin")
+            .RequireAuthorization(PolicyNames.AdminOnly);
 
         group.MapGet("/logs", GetLogs);
         group.MapGet("/suspicious-users", GetSuspiciousUsers);
@@ -65,6 +67,7 @@ public static class AdminEndpoints
         return Results.NoContent();
     }
 
+    // IsAdmin retained for backward compatibility; policy now enforces this at the group level
     private static bool IsAdmin(HttpContext context) =>
         AuthEndpoints.GetUserRole(context) == RoleNames.Admin;
 }

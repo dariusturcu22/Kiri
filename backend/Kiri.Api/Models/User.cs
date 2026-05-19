@@ -10,4 +10,5 @@ public sealed class User
     public required int RoleId { get; set; }
     public Role Role { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
+    public bool Is2FAEnabled { get; set; }
 }

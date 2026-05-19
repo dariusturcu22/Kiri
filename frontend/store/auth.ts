@@ -19,11 +19,16 @@ function setClientCookie(token: string, expiryHours = 2) {
   document.cookie = `kiri_token=${token}; path=/; SameSite=Lax; expires=${expires}`;
 }
 
+export type LoginResult =
+  | { requires2FA: false }
+  | { requires2FA: true; email: string };
+
 type AuthStore = {
   user: AuthUser | null;
   isLoading: boolean;
   fetchMe: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  verify2FA: (email: string, code: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -51,9 +56,24 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   login: async (email, password) => {
-    const response = await api.post<AuthResponse>("/api/auth/login", {
+    const response = await api.post<AuthResponse & { requires2FA?: boolean }>(
+      "/api/auth/login",
+      { email, password },
+      { validateStatus: (s) => s === 200 || s === 202 }
+    );
+    if (response.status === 202 || response.data.requires2FA) {
+      return { requires2FA: true, email };
+    }
+    const { token, ...userData } = response.data;
+    if (token) setClientCookie(token);
+    set({ user: userData as AuthUser });
+    return { requires2FA: false };
+  },
+
+  verify2FA: async (email, code) => {
+    const response = await api.post<AuthResponse>("/api/auth/verify-2fa", {
       email,
-      password,
+      code,
     });
     const { token, ...userData } = response.data;
     if (token) setClientCookie(token);
