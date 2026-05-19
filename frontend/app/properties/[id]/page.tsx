@@ -142,7 +142,8 @@ export default function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const canEdit = user?.role === "Landlord" || user?.role === "Admin";
+  const [mounted, setMounted] = useState(false);
+  const canEdit = mounted && (user?.role === "Landlord" || user?.role === "Admin");
 
   const quickActions = buildQuickActions(() => router.push("/chat"));
   const { getPropertyById, deleteProperty } = usePropertyStore();
@@ -150,6 +151,8 @@ export default function PropertyDetailPage() {
   const propertyId = Number(params.id);
   const [property, setProperty] = useState<Property | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     getPropertyById(propertyId).then((found) => {

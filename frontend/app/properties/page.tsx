@@ -30,12 +30,15 @@ const COL_GRID =
 export default function PropertiesPage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const canEdit = user?.role === "Landlord" || user?.role === "Admin";
+  const [mounted, setMounted] = useState(false);
+  const canEdit = mounted && (user?.role === "Landlord" || user?.role === "Admin");
   const { properties, isLoading, fetchProperties, deleteProperty } =
     usePropertyStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [showStats, setShowStats] = useState(false);
   const [search, setSearch] = useState("");
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     fetchProperties();
