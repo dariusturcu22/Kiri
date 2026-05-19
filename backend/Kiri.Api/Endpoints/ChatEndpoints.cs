@@ -10,7 +10,9 @@ public static class ChatEndpoints
 
     public static void MapChatEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/chat").WithTags("Chat");
+        var group = app.MapGroup("/api/chat")
+            .WithTags("Chat")
+            .RequireAuthorization(PolicyNames.AnyAuthenticated);
 
         group.MapGet("/history/{otherUserId:int}", GetConversationHistory);
         group.MapGet("/users", GetOnlineUsersList);

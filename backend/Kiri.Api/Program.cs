@@ -4,6 +4,7 @@ using Kiri.Api.Data;
 using Kiri.Api.Endpoints;
 using Kiri.Api.Hubs;
 using Kiri.Api.Middleware;
+using Kiri.Api.Models;
 using Kiri.Api.Services;
 using Kiri.Api.Storage;
 using Kiri.Api.Validators;
@@ -33,6 +34,7 @@ builder.Services.AddSingleton<IChatStorage, MongoChatStorage>();
 builder.Services.AddSignalR();
 builder.Services.AddValidatorsFromAssemblyContaining<PropertyFormDataValidator>();
 builder.Services.AddSingleton<JwtService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHostedService<BehaviourDetectionService>();
 
 builder.Services.AddCors(options =>
@@ -48,18 +50,14 @@ builder.Services.AddCors(options =>
                     host.Equals("desktop-l6p46o3", StringComparison.OrdinalIgnoreCase))
                     return true;
 
-                // Allow private-network IP addresses (LAN access from mobile)
                 if (System.Net.IPAddress.TryParse(host, out var ip))
                 {
                     var bytes = ip.GetAddressBytes();
                     if (bytes.Length == 4)
-                    {
                         return bytes[0] == 10 ||
                                (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) ||
                                (bytes[0] == 192 && bytes[1] == 168);
-                    }
                 }
-
                 return false;
             })
             .AllowAnyMethod()
@@ -69,6 +67,7 @@ builder.Services.AddCors(options =>
 });
 
 var jwtService = new JwtService(builder.Configuration);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -82,8 +81,30 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 return Task.CompletedTask;
             }
         };
+    })
+    .AddCookie("ExternalAuth", o =>
+    {
+        o.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+        o.Cookie.Name = "kiri_external";
+        o.Cookie.HttpOnly = true;
+        o.Cookie.SameSite = SameSiteMode.Lax;
+    })
+    .AddGoogle(options =>
+    {
+        var clientId = builder.Configuration["Google:ClientId"];
+        var clientSecret = builder.Configuration["Google:ClientSecret"];
+        options.ClientId = string.IsNullOrEmpty(clientId) ? "placeholder" : clientId;
+        options.ClientSecret = string.IsNullOrEmpty(clientSecret) ? "placeholder" : clientSecret;
+        options.SignInScheme = "ExternalAuth";
+        options.CallbackPath = "/api/auth/google/callback";
+        options.Scope.Add("email");
+        options.Scope.Add("profile");
     });
-builder.Services.AddAuthorization();
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(PolicyNames.AnyAuthenticated, p => p.RequireAuthenticatedUser())
+    .AddPolicy(PolicyNames.LandlordOrAdmin,  p => p.RequireClaim(JwtClaimKeys.Role, RoleNames.Landlord, RoleNames.Admin))
+    .AddPolicy(PolicyNames.AdminOnly,        p => p.RequireClaim(JwtClaimKeys.Role, RoleNames.Admin));
 
 builder.Services.AddDbContext<KiriDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

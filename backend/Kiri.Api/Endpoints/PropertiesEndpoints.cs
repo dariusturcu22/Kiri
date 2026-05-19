@@ -1,6 +1,7 @@
 using FluentValidation;
 using Kiri.Api.Models;
 using Kiri.Api.Storage;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Kiri.Api.Endpoints;
 
@@ -14,12 +15,15 @@ public static class PropertiesEndpoints
         var group = app.MapGroup("/api/properties")
             .WithTags("Properties");
 
-        group.MapGet("/", GetPagedProperties);
-        group.MapGet("/{id:int}", GetPropertyById);
-        group.MapPost("/", CreateProperty);
-        group.MapPut("/{id:int}", UpdateProperty);
-        group.MapDelete("/{id:int}", DeleteProperty);
-        group.MapGet("/statistics", GetStatistics);
+        // Any authenticated user can view properties and statistics
+        group.MapGet("/", GetPagedProperties).RequireAuthorization(PolicyNames.AnyAuthenticated);
+        group.MapGet("/{id:int}", GetPropertyById).RequireAuthorization(PolicyNames.AnyAuthenticated);
+        group.MapGet("/statistics", GetStatistics).RequireAuthorization(PolicyNames.AnyAuthenticated);
+
+        // Only Landlord or Admin can create / update / delete
+        group.MapPost("/", CreateProperty).RequireAuthorization(PolicyNames.LandlordOrAdmin);
+        group.MapPut("/{id:int}", UpdateProperty).RequireAuthorization(PolicyNames.LandlordOrAdmin);
+        group.MapDelete("/{id:int}", DeleteProperty).RequireAuthorization(PolicyNames.LandlordOrAdmin);
     }
 
     private static async Task<IResult> GetPagedProperties(

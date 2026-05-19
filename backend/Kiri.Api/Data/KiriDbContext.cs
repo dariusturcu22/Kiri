@@ -12,6 +12,10 @@ public sealed class KiriDbContext(DbContextOptions<KiriDbContext> options) : DbC
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<ActionLog> ActionLogs => Set<ActionLog>();
     public DbSet<SuspiciousUser> SuspiciousUsers => Set<SuspiciousUser>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<TwoFactorCode> TwoFactorCodes => Set<TwoFactorCode>();
+    public DbSet<OAuthAccount> OAuthAccounts => Set<OAuthAccount>();
+    public DbSet<OAuthExchangeCode> OAuthExchangeCodes => Set<OAuthExchangeCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -69,6 +73,31 @@ public sealed class KiriDbContext(DbContextOptions<KiriDbContext> options) : DbC
         {
             entity.HasKey(s => s.Id);
             entity.HasIndex(s => s.UserId);
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.HasIndex(t => t.UserId);
+        });
+
+        modelBuilder.Entity<TwoFactorCode>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.HasIndex(t => t.UserId);
+        });
+
+        modelBuilder.Entity<OAuthAccount>(entity =>
+        {
+            entity.HasKey(o => o.Id);
+            entity.HasIndex(o => new { o.Provider, o.ProviderUserId }).IsUnique();
+            entity.HasIndex(o => o.UserId);
+        });
+
+        modelBuilder.Entity<OAuthExchangeCode>(entity =>
+        {
+            entity.HasKey(o => o.Id);
+            entity.HasIndex(o => o.Code).IsUnique();
         });
     }
 }
