@@ -18,6 +18,8 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:5046";
+
 export default function AuthPage() {
   const { login, verify2FA, register } = useAuthStore();
 
@@ -274,7 +276,7 @@ export default function AuthPage() {
 
             <button
               type="button"
-              onClick={() => { window.location.href = "/api/auth/google"; }}
+              onClick={() => { window.location.href = `${BACKEND_URL}/api/auth/google`; }}
               className="w-full py-3 flex items-center justify-center gap-3 border border-[#E8E0D5] bg-white rounded-full text-sm font-medium text-[#1E1208] hover:bg-[#FAF7F2] transition-colors"
             >
               <GoogleIcon />
@@ -418,7 +420,7 @@ export default function AuthPage() {
 
             <button
               type="button"
-              onClick={() => { window.location.href = "/api/auth/google"; }}
+              onClick={() => { window.location.href = `${BACKEND_URL}/api/auth/google`; }}
               className="w-full py-3 flex items-center justify-center gap-3 border border-[#E8E0D5] bg-white rounded-full text-sm font-medium text-[#1E1208] hover:bg-[#FAF7F2] transition-colors"
             >
               <GoogleIcon />
