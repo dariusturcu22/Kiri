@@ -23,5 +23,4 @@ Thumbs.db
 # Editor folders
 .vscode/
 .idea/
-backend/Kiri.Api/Migrations/
 .claude/worktrees/
