@@ -4,27 +4,25 @@ import type { NextRequest } from "next/server";
 const publicPaths = ["/auth", "/", "/forgot-password", "/reset-password", "/auth/callback"];
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const pathname = request.nextUrl.pathname;
+  const isPublicPath = publicPaths.includes(pathname);
+  const token = request.cookies.get("kiri_token");
 
-  const isPublicPath = publicPaths.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
-
-  const hasToken = request.cookies.has("kiri_token");
-
-  if (!hasToken && !isPublicPath) {
-    return NextResponse.redirect(new URL("/auth", request.url));
+  if (!token && !isPublicPath) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth";
+    return NextResponse.redirect(url);
   }
 
-  if (hasToken && pathname === "/auth") {
-    return NextResponse.redirect(new URL("/properties", request.url));
+  if (token && pathname === "/auth") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/properties";
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|logo\\.png|api/).*)",
-  ],
+  matcher: ["/((?!_next|favicon\\.ico|logo\\.png|api/).*)" ],
 };
