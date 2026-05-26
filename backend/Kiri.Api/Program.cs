@@ -15,6 +15,11 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Render (and similar cloud hosts) inject a PORT env var; honour it if present.
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+    builder.WebHost.UseUrls($"http://+:{port}");
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -37,6 +42,8 @@ builder.Services.AddSingleton<JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHostedService<BehaviourDetectionService>();
 
+var configuredFrontendUrl = (builder.Configuration["FrontendUrl"] ?? "").TrimEnd('/');
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -44,6 +51,13 @@ builder.Services.AddCors(options =>
         policy
             .SetIsOriginAllowed(origin =>
             {
+                var trimmed = origin.TrimEnd('/');
+
+                // Allow the explicitly configured frontend URL (e.g. Vercel production URL)
+                if (!string.IsNullOrEmpty(configuredFrontendUrl) &&
+                    string.Equals(trimmed, configuredFrontendUrl, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
                 var host = new Uri(origin).Host;
                 if (host == "localhost" ||
                     host.Equals("desktop-l6p46o3.local", StringComparison.OrdinalIgnoreCase) ||
