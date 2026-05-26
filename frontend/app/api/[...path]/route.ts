@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND = "http://localhost:5046";
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:5046";
 
 type Context = { params: Promise<{ path: string[] }> };
 
