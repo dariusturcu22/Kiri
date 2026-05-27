@@ -14,7 +14,10 @@ async function proxy(req: NextRequest, context: Context) {
   const forwardHeaders = new Headers();
   req.headers.forEach((value, key) => {
     const lower = key.toLowerCase();
-    if (!["host", "connection", "transfer-encoding"].includes(lower)) {
+    // Strip hop-by-hop headers and accept-encoding so Render returns
+    // uncompressed responses (Vercel decompresses internally and would
+    // cause ERR_CONTENT_DECODING_FAILED if we forward Content-Encoding: gzip)
+    if (!["host", "connection", "transfer-encoding", "accept-encoding"].includes(lower)) {
       forwardHeaders.set(key, value);
     }
   });
