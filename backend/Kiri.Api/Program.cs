@@ -9,6 +9,7 @@ using Kiri.Api.Services;
 using Kiri.Api.Storage;
 using Kiri.Api.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using System.Text.Json.Serialization;
@@ -19,6 +20,18 @@ var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
     builder.WebHost.UseUrls($"http://+:{port}");
+
+// Trust all forwarded headers from Render's reverse proxy.
+// XForwardedProto: makes ASP.NET Core see "https" → OAuth redirect_uri uses https.
+// XForwardedFor:   gives us the real client IP for action logs.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Clear the default allow-list so all proxies are trusted (Render's internal
+    // proxy IP changes and is not predictable on the free tier).
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -97,13 +110,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = jwtService.GetValidationParameters();
         options.Events = new JwtBearerEvents
         {
-            // Try the httpOnly cookie first; if absent the JwtBearer handler
-            // automatically falls through to the Authorization: Bearer header.
+            // Token resolution priority:
+            //   1. httpOnly cookie (standard browser login)
+            //   2. access_token query param (SignalR long-polling / WebSocket)
+            //   3. Authorization: Bearer header (axios interceptor — primary path
+            //      when cookies are blocked by cross-domain restrictions)
+            // If none of these is set ctx.Token stays null and JwtBearer
+            // automatically checks the Authorization header as its own fallback.
             OnMessageReceived = ctx =>
             {
                 var cookie = ctx.Request.Cookies["kiri_token"];
                 if (!string.IsNullOrEmpty(cookie))
+                {
                     ctx.Token = cookie;
+                    return Task.CompletedTask;
+                }
+
+                // SignalR passes the token as ?access_token=… for WebSocket and
+                // long-polling transports when accessTokenFactory is configured.
+                var accessToken = ctx.Request.Query["access_token"].ToString();
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    ctx.Request.Path.StartsWithSegments("/hubs"))
+                {
+                    ctx.Token = accessToken;
+                }
+
                 return Task.CompletedTask;
             }
         };
@@ -153,6 +184,10 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// Must come before UseCors / UseAuthentication so that the scheme and IP
+// are already corrected when those middlewares run.
+app.UseForwardedHeaders();
 
 app.UseCors();
 app.UseAuthentication();

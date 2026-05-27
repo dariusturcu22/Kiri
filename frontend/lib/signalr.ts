@@ -2,12 +2,15 @@ import * as signalR from "@microsoft/signalr";
 
 let connection: signalR.HubConnection | null = null;
 
+// Connect directly to the Render backend for SignalR — the Vercel proxy
+// (Route Handlers) cannot upgrade WebSocket connections, and the hubs proxy
+// had localhost hardcoded anyway. Connecting directly also lets us pass the
+// JWT via accessTokenFactory so SignalR can authenticate the user.
 function getHubUrl(): string {
-  // Route through the Next.js server (/hubs/* → http://localhost:5046/hubs/* via
-  // the Route Handler at app/hubs/[...path]/route.ts). This means the browser
-  // only talks to the trusted Next.js cert — no direct backend cert needed on mobile.
   if (typeof window === "undefined") return "http://localhost:5046/hubs/chat";
-  return `${window.location.origin}/hubs/chat`;
+  const backendUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://kiri-fd5j.onrender.com";
+  return `${backendUrl}/hubs/chat`;
 }
 
 export function getChatConnection(): signalR.HubConnection {
@@ -15,9 +18,12 @@ export function getChatConnection(): signalR.HubConnection {
     connection = new signalR.HubConnectionBuilder()
       .withUrl(getHubUrl(), {
         withCredentials: true,
-        // Force Long Polling so all traffic is plain HTTP requests through the
-        // Next.js proxy. WebSocket upgrades can't be proxied by Route Handlers.
+        // Long Polling is required on Render's free tier (WebSocket is not
+        // supported without a paid plan / persistent connection).
         transport: signalR.HttpTransportType.LongPolling,
+        // Send the JWT so the hub can authenticate the caller even when
+        // cross-domain cookies are blocked.
+        accessTokenFactory: () => localStorage.getItem("kiri_token") ?? "",
       })
       .withAutomaticReconnect()
       .build();
