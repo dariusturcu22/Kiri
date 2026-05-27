@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using BCrypt.Net;
 using Kiri.Api.Data;
 using Kiri.Api.Models;
@@ -126,18 +127,22 @@ public static class AuthEndpoints
         var userId = GetUserId(context);
         if (userId == 0) return Results.Unauthorized();
 
-        var user = await db.Users.FindAsync(userId);
+        // Read fresh data from the database so the response is always accurate,
+        // regardless of what the JWT claims contain.
+        var user = await db.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
-        var response = new UserResponse(
-            Id: userId,
-            Email: GetClaim(context, JwtClaimKeys.Email)!,
-            FirstName: GetClaim(context, JwtClaimKeys.FirstName)!,
-            LastName: GetClaim(context, JwtClaimKeys.LastName)!,
-            Role: GetUserRole(context)!,
-            Is2FAEnabled: user?.Is2FAEnabled ?? false
-        );
+        if (user is null) return Results.Unauthorized();
 
-        return Results.Ok(response);
+        return Results.Ok(new UserResponse(
+            Id: user.Id,
+            Email: user.Email,
+            FirstName: user.FirstName,
+            LastName: user.LastName,
+            Role: user.Role.Name,
+            Is2FAEnabled: user.Is2FAEnabled
+        ));
     }
 
     // ── Users list ────────────────────────────────────────────────────────────
@@ -445,6 +450,10 @@ public static class AuthEndpoints
         new(user.Id, user.Email, user.FirstName, user.LastName, user.Role.Name, token);
 
     private record AuthResponse(
-        int Id, string Email, string FirstName, string LastName, string Role,
-        string Token);
+        [property: JsonPropertyName("id")]        int    Id,
+        [property: JsonPropertyName("email")]     string Email,
+        [property: JsonPropertyName("firstName")] string FirstName,
+        [property: JsonPropertyName("lastName")]  string LastName,
+        [property: JsonPropertyName("role")]      string Role,
+        [property: JsonPropertyName("token")]     string Token);
 }
