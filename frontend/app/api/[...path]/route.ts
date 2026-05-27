@@ -44,7 +44,10 @@ async function proxy(req: NextRequest, context: Context) {
   const resHeaders = new Headers();
   upstream.headers.forEach((value, key) => {
     const lower = key.toLowerCase();
-    if (["transfer-encoding", "connection", "set-cookie"].includes(lower)) return;
+    // Strip hop-by-hop headers and content-encoding: Vercel's Node.js fetch
+    // automatically decompresses gzip bodies, so forwarding Content-Encoding
+    // would cause ERR_CONTENT_DECODING_FAILED in the browser.
+    if (["transfer-encoding", "connection", "set-cookie", "content-encoding"].includes(lower)) return;
     resHeaders.set(key, value);
   });
 
