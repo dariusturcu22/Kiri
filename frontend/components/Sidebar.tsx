@@ -57,9 +57,10 @@ export default function Sidebar() {
     });
   }
 
-  const initials = user
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : "?";
+  const initials =
+    user?.firstName && user?.lastName
+      ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+      : "?";
 
   async function handleLogout() {
     await logout();

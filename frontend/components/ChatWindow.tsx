@@ -46,7 +46,7 @@ export default function ChatWindow({ currentUser, selectedUser }: Props) {
       <div className="px-6 py-4 bg-white border-b border-[#EDE8DF] flex items-center gap-3">
         <div className="w-9 h-9 rounded-full bg-[#3A5230] flex items-center justify-center shrink-0">
           <span className="text-xs font-bold text-white">
-            {selectedUser.firstName[0]}{selectedUser.lastName[0]}
+            {selectedUser.firstName?.[0]}{selectedUser.lastName?.[0]}
           </span>
         </div>
         <div>
