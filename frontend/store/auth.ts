@@ -9,14 +9,22 @@ export type AuthUser = {
   role: string;
 };
 
-// Backend includes the JWT token in login/register responses so the frontend
-// can set the cookie client-side. This is a fallback for mobile Chrome, which
-// silently drops server-side Set-Cookie headers when the TLS cert is untrusted.
 type AuthResponse = AuthUser & { token?: string };
 
-function setClientCookie(token: string, expiryHours = 2) {
+// Persist the JWT in localStorage so the axios interceptor can attach it as
+// an Authorization: Bearer header on every request (primary auth mechanism).
+// Also write it as a plain cookie as a belt-and-suspenders fallback.
+function persistToken(token: string, expiryHours = 2) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("kiri_token", token);
   const expires = new Date(Date.now() + expiryHours * 60 * 60 * 1000).toUTCString();
   document.cookie = `kiri_token=${token}; path=/; SameSite=Lax; expires=${expires}`;
+}
+
+function clearToken() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("kiri_token");
+  document.cookie = "kiri_token=; path=/; max-age=0";
 }
 
 export type LoginResult =
@@ -65,7 +73,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       return { requires2FA: true, email };
     }
     const { token, ...userData } = response.data;
-    if (token) setClientCookie(token);
+    if (token) persistToken(token);
     set({ user: userData as AuthUser });
     return { requires2FA: false };
   },
@@ -76,20 +84,24 @@ export const useAuthStore = create<AuthStore>((set) => ({
       code,
     });
     const { token, ...userData } = response.data;
-    if (token) setClientCookie(token);
+    if (token) persistToken(token);
     set({ user: userData as AuthUser });
   },
 
   register: async (data) => {
     const response = await api.post<AuthResponse>("/api/auth/register", data);
     const { token, ...userData } = response.data;
-    if (token) setClientCookie(token);
+    if (token) persistToken(token);
     set({ user: userData as AuthUser });
   },
 
   logout: async () => {
-    await api.post("/api/auth/logout");
-    document.cookie = "kiri_token=; path=/; max-age=0";
+    try {
+      await api.post("/api/auth/logout");
+    } catch {
+      // ignore errors on logout
+    }
+    clearToken();
     set({ user: null });
   },
 }));

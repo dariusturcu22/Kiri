@@ -89,9 +89,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = jwtService.GetValidationParameters();
         options.Events = new JwtBearerEvents
         {
+            // Try the httpOnly cookie first; if absent the JwtBearer handler
+            // automatically falls through to the Authorization: Bearer header.
             OnMessageReceived = ctx =>
             {
-                ctx.Token = ctx.Request.Cookies["kiri_token"];
+                var cookie = ctx.Request.Cookies["kiri_token"];
+                if (!string.IsNullOrEmpty(cookie))
+                    ctx.Token = cookie;
                 return Task.CompletedTask;
             }
         };

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:5046";
+// In production the env var must be set to the Render backend URL.
+// The Render URL is used as default so the proxy works even when the
+// env var is accidentally missing from the Vercel dashboard.
+const BACKEND =
+  process.env.NEXT_PUBLIC_BACKEND_URL ??
+  (process.env.NODE_ENV === "production"
+    ? "https://kiri-fd5j.onrender.com"
+    : "http://localhost:5046");
 
 type Context = { params: Promise<{ path: string[] }> };
 
