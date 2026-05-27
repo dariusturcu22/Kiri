@@ -51,26 +51,34 @@ builder.Services.AddCors(options =>
         policy
             .SetIsOriginAllowed(origin =>
             {
+                if (string.IsNullOrWhiteSpace(origin)) return false;
                 var trimmed = origin.TrimEnd('/');
 
-                // Allow the explicitly configured frontend URL (e.g. Vercel production URL)
+                // Explicitly configured frontend URL (Render env var FrontendUrl)
                 if (!string.IsNullOrEmpty(configuredFrontendUrl) &&
                     string.Equals(trimmed, configuredFrontendUrl, StringComparison.OrdinalIgnoreCase))
                     return true;
 
                 var host = new Uri(origin).Host;
+
+                // Any Vercel deployment (*.vercel.app) — covers prod and preview builds
+                if (host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                // Local development
                 if (host == "localhost" ||
                     host.Equals("desktop-l6p46o3.local", StringComparison.OrdinalIgnoreCase) ||
                     host.Equals("desktop-l6p46o3", StringComparison.OrdinalIgnoreCase))
                     return true;
 
+                // Private network IP ranges (LAN / dev machines)
                 if (System.Net.IPAddress.TryParse(host, out var ip))
                 {
-                    var bytes = ip.GetAddressBytes();
-                    if (bytes.Length == 4)
-                        return bytes[0] == 10 ||
-                               (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) ||
-                               (bytes[0] == 192 && bytes[1] == 168);
+                    var b = ip.GetAddressBytes();
+                    if (b.Length == 4)
+                        return b[0] == 10 ||
+                               (b[0] == 172 && b[1] >= 16 && b[1] <= 31) ||
+                               (b[0] == 192 && b[1] == 168);
                 }
                 return false;
             })
